@@ -18,3 +18,6 @@
 ### Pubmed
 * `wget https://linqs-data.soe.ucsc.edu/public/Pubmed-Diabetes.tgz`
 * `tar -xf Pubmed-Diabetes.tgz -C data`
+
+
+# WORK IN PROGRESS...
