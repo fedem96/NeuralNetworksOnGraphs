@@ -2,9 +2,7 @@ import os
 import csv
 import numpy as np
 
-DIR_NAME = os.path.dirname(os.path.realpath(__file__))
-data = DIR_NAME + '/data'
-
+data = 'data'
 
 def read_dataset(dataset):
     print("reading " + dataset + " dataset")
@@ -15,7 +13,7 @@ def read_dataset(dataset):
 
 
 def read_cc(dataset):
-    folder = os.path.join("data", dataset)
+    folder = os.path.join(data, dataset)
     content_file = os.path.join(folder, dataset + ".content")
     cites_file = os.path.join(folder, dataset + ".cites")
 
@@ -47,7 +45,7 @@ def read_cc(dataset):
                 continue
             cited = keys_to_idx[row[0]]
             citing = keys_to_idx[row[1]]
-            neighbors[citing].append(cited)
+            neighbors[citing].append([cited, 1])
             valid_edges += 1
 
     print("valid edges:", valid_edges)
@@ -89,12 +87,12 @@ def read_p(dataset):
 
     with open(edges) as csvFile:
         for idx, row in enumerate(csvFile):
-            if (idx > 2):
+            if (idx >= 2):
                 node = row.replace('\n', '').replace('paper:', '').split('\t')
                 node.remove('|')
-                neighbors[keys.index(node[1])].append([node[2], int(node[0])])
+                neighbors[keys.index(node[1])].append([keys.index(node[2]), int(node[0])])
 
-    return features, neighbors, labels, keys
+    return np.asarray(features), neighbors, labels, keys
 
 
 if __name__ == '__main__':
