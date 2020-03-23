@@ -2,7 +2,8 @@ import os
 import csv
 import numpy as np
 
-data = 'data'
+data = 'dataset'
+
 
 def read_dataset(dataset):
     print("reading " + dataset + " dataset")
@@ -90,12 +91,41 @@ def read_p(dataset):
             if (idx >= 2):
                 node = row.replace('\n', '').replace('paper:', '').split('\t')
                 node.remove('|')
-                neighbors[keys.index(node[1])].append([keys.index(node[2]), int(node[0])])
+                neighbors[keys.index(node[1])].append(
+                    [keys.index(node[2]), int(node[0])])
 
     return np.asarray(features), neighbors, labels, keys
 
 
+def permute(features, neighbors, labels, keys, seed=None):
+
+    np.random.seed(seed=seed)
+    permutation = np.random.permutation(len(keys))
+    inv_permutation = np.argsort(permutation)
+    labels = [labels[i] for i in permutation]
+    keys = [keys[p] for p in permutation]
+    features = features[permutation]
+    for n in neighbors:
+        for edge in n:
+            edge[0] = inv_permutation[edge[0]]
+
+    neighbors = [neighbors[p] for p in permutation]
+    return features, neighbors, labels, keys
+
+
+def split(dataset):
+    n_classes = 3
+    if dataset == "cora":
+        n_classes = 7
+    elif dataset == "citeseer":
+        n_classes = 6
+    
+    train_size = 20*n_classes
+    return np.arange(train_size), np.arange(train_size, train_size+500), np.arange(train_size+500, train_size+1500)
+
+
 if __name__ == '__main__':
 
-    read_dataset('pubmed')
-    read_dataset("cora")
+    features, neighbors, labels, keys = read_dataset("cora")
+    permute(features, neighbors, labels, keys, 1234)
+    train_idx, val_idx, test_idx = split("cora")
