@@ -1,8 +1,11 @@
 import tensorflow as tf
 import numpy as np
+import sys, os
 
-from planetoid_t import Planetoid_T
-from ut_pl import read_dataset, permute, split, one_hot_enc
+sys.path.insert(1, os.path.dirname(os.path.abspath('__file__')))
+
+from Planetoid.planetoid_t import Planetoid_T
+from utils import read_dataset, permute, split, one_hot_enc
 
 
 class UnlabeldLoss(tf.keras.losses.Loss):

@@ -1,7 +1,10 @@
 import tensorflow as tf
 import numpy as np
+import sys, os
 
-from planetoid import Planetoid
+sys.path.insert(1, os.path.dirname(os.path.abspath('__file__')))
+
+from Planetoid.planetoid import Planetoid
 
 
 class Planetoid_T(Planetoid):

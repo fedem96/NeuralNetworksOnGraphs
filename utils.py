@@ -58,6 +58,7 @@ def read_cc(dataset):
 
 
 def read_p(dataset):
+
     features = []
     neighbors = []
     labels = []
@@ -92,9 +93,21 @@ def read_p(dataset):
                 node = row.replace('\n', '').replace('paper:', '').split('\t')
                 node.remove('|')
                 neighbors[keys.index(node[1])].append(
-                    [keys.index(node[2]), int(node[0])])
+                    np.array([keys.index(node[2]), int(node[0])]))
 
-    return np.asarray(features), neighbors, labels, keys
+    o_h_labels = one_hot_enc(n_classes=3, labels=labels)
+
+    return np.array(features), np.array(neighbors), labels, o_h_labels, keys
+
+
+def one_hot_enc(n_classes, labels):
+
+    for l in range(len(labels)):
+        label = labels[l]
+        labels[l] = np.zeros(n_classes)
+        labels[l][label-1] = 1
+
+    return np.array(labels)
 
 
 def permute(features, neighbors, labels, keys, seed=None):
