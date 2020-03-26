@@ -163,7 +163,7 @@ def split(dataset, size):
     mask_val[np.arange(train_size, train_size+500)] = True
 
     mask_test = np.zeros(size, dtype=bool)
-    mask_test[np.arange(train_size+500, train_size+1500)] = True
+    mask_test[np.arange(size-1000, size)] = True
 
     return mask_train, mask_test, mask_val
 

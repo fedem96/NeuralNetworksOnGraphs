@@ -8,7 +8,7 @@ from Planetoid.planetoid import Planetoid
 
 
 class Planetoid_T(Planetoid):
-    ''' Planetoid transductive '''
+    """ Planetoid transductive """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -38,8 +38,8 @@ class Planetoid_T(Planetoid):
         if modality == "s":
             h_f = self.h_k(inputs[0])
 
-            # TODO: METTI TRAINABLE==FALSE
-            embs = self.embedding(inputs[1]) # DA TENERE FREEEZATO NEL SUPERVISED
+            # freezed during label classification
+            embs = self.embedding(inputs[1])
             h_e = self.h_l(embs)
 
             h_node = tf.keras.layers.concatenate([h_f, h_e])
@@ -57,7 +57,7 @@ class Planetoid_T(Planetoid):
     def context_batch(self):
         """ Algorithm 1: Sampling graph context (with negative sample) """
         while True:
-            indices = np.random.permutation(len(self.featuresc))
+            indices = np.random.permutation(len(self.features))
             j = 0
             while j < len(indices):
                 context_b_x, context_b_y = [], []
@@ -71,15 +71,44 @@ class Planetoid_T(Planetoid):
 
                 yield np.array(context_b_x, dtype=np.float32), np.array(context_b_y, dtype=np.float32)
                 j = k
+    
+    def step_train(self, L_s, L_u, optimizer_u, optimizer_s, T1, T2):
+        """ One train iteration: graph context and label classification """
+        loss_s = 0
+        self.embedding.trainable = False
+        for epoch in range(1, T1+1):
+            b_x, b_y, indices = next(self.labeled_batch())
+            with tf.GradientTape() as tape:
+                out = self.call([b_x, indices], modality="s")
+                loss_s += tf.reduce_mean(L_s(out, b_y))
+            grads = tape.gradient(loss_s, self.trainable_weights)
+            optimizer_s.apply_gradients(zip(grads, self.trainable_weights))
 
-    def labeled_batch(self):
-        """ Generate mini-batch for labeled nodes """
-        while True:
-            indices = np.random.permutation(len(self.features[self.mask_train]))
-            j = 0
-            while j < len(self.mask_train):
-                k = min(len(self.mask_train), j+self.N1)
-                b_x = self.features[indices[j:k]]
-                b_y = self.labels[indices[j:k]]
-                yield np.array(b_x, dtype=np.float32), np.array(b_y, dtype=np.float32), indices[j:k]
-                j = k
+        loss_u = 0
+        # for l in self.layers:
+        #     l.trainable = not l.trainable
+        self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = False, False, False
+        self.embedding.trainable = True
+        for epoch in range(1, T2+1):
+            b_x, b_y = next(self.context_batch())
+            with tf.GradientTape() as tape:
+                out = self.call(b_x, modality="u")
+                loss_u += tf.reduce_mean(L_u(out, b_y))
+            grads = tape.gradient(loss_u, self.trainable_weights)
+            optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
+
+        return loss_s, loss_u
+
+    def pretrain_step(self, L_u, optimizer_u, iters):
+
+        loss_u = 0
+        self.embedding.trainable = True
+        for epoch in range(1, iters+1):
+            b_x, b_y = next(self.context_batch())
+            with tf.GradientTape() as tape:
+                out = self.call(b_x, modality="u")
+                loss_u += tf.reduce_mean(L_u(out, b_y))
+            grads = tape.gradient(loss_u, self.trainable_weights)
+            optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
+
+        return loss_u

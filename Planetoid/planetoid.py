@@ -67,5 +67,17 @@ class Planetoid(tf.keras.Model):
 
         return i, c, gamma
 
+    def labeled_batch(self):
+        """ Generate mini-batch for labeled nodes """
+        while True:
+            indices = np.random.permutation(len(self.features[self.mask_train]))
+            j = 0
+            while j < len(self.mask_train):
+                k = min(len(self.mask_train), j+self.N1)
+                b_x = self.features[indices[j:k]]
+                b_y = self.labels[indices[j:k]]
+                yield np.array(b_x, dtype=np.float32), np.array(b_y, dtype=np.float32), indices[j:k]
+                j = k
+
 
 
