@@ -110,10 +110,11 @@ def permute(features, neighbors, labels, keys, seed=None):
             edge[0] = inv_permutation[edge[0]]
 
     neighbors = [neighbors[p] for p in permutation]
+
     return features, neighbors, labels, keys
 
 
-def split(dataset):
+def split(dataset, size):
     n_classes = 3
     if dataset == "cora":
         n_classes = 7
@@ -121,12 +122,24 @@ def split(dataset):
         n_classes = 6
 
     train_size = 20*n_classes
-    return np.arange(train_size), np.arange(train_size, train_size+500), np.arange(train_size+500, train_size+1500)
+
+    mask_train = np.zeros(len(size), dtype=bool)
+    mask_train[np.arange(train_size)] = True
+
+    mask_val = np.zeros(len(size), dtype=bool)
+    mask_val[np.arange(train_size, train_size+500)] = True
+
+    mask_test = np.zeros(len(size), dtype=bool)
+    mask_test[np.arange(train_size+500, train_size+1500)] = True
+
+    return mask_train, mask_test, mask_val
 
 
 if __name__ == '__main__':
 
-    features, neighbors, labels, keys = read_dataset("cora")
-    permute(features, neighbors, labels, keys, 1234)
-    train_idx, val_idx, test_idx = split("cora")
-    print('das')
+    dataset = "cora"
+    seed = 1234
+
+    features, neighbors, labels, keys = read_dataset(dataset)
+    permute(features, neighbors, labels, keys, seed)
+    train_idx, val_idx, test_idx = split(dataset, len(features))
