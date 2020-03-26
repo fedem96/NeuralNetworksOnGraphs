@@ -6,6 +6,7 @@ data = 'data'
 
 
 def read_dataset(dataset):
+
     print("reading " + dataset + " dataset")
     if "pubmed" in dataset:
         return read_p(dataset)
@@ -14,6 +15,7 @@ def read_dataset(dataset):
 
 
 def read_cc(dataset):
+
     folder = os.path.join(data, dataset)
     content_file = os.path.join(folder, dataset + ".content")
     cites_file = os.path.join(folder, dataset + ".cites")
@@ -53,11 +55,13 @@ def read_cc(dataset):
     print("invalid edges:", invalid_edges)
 
     features = np.array(features)
+    neighbors = np.array(neighbors)
 
     return features, neighbors, labels, keys
 
 
 def read_p(dataset):
+
     features = []
     neighbors = []
     labels = []
@@ -92,9 +96,21 @@ def read_p(dataset):
                 node = row.replace('\n', '').replace('paper:', '').split('\t')
                 node.remove('|')
                 neighbors[keys.index(node[1])].append(
-                    [keys.index(node[2]), int(node[0])])
+                    np.array([keys.index(node[2]), int(node[0])]))
 
-    return np.asarray(features), neighbors, labels, keys
+    o_h_labels = one_hot_enc(n_classes=3, labels=labels)
+
+    return np.array(features), np.array(neighbors), labels, o_h_labels, keys
+
+
+def one_hot_enc(n_classes, labels):
+
+    for l in range(len(labels)):
+        label = labels[l]
+        labels[l] = np.zeros(n_classes)
+        labels[l][label-1] = 1
+
+    return np.array(labels)
 
 
 def permute(features, neighbors, labels, keys, seed=None):
@@ -110,6 +126,7 @@ def permute(features, neighbors, labels, keys, seed=None):
             edge[0] = inv_permutation[edge[0]]
 
     neighbors = [neighbors[p] for p in permutation]
+
     return features, neighbors, labels, keys
 
 
@@ -121,12 +138,5 @@ def split(dataset):
         n_classes = 6
 
     train_size = 20*n_classes
+
     return np.arange(train_size), np.arange(train_size, train_size+500), np.arange(train_size+500, train_size+1500)
-
-
-if __name__ == '__main__':
-
-    features, neighbors, labels, keys = read_dataset("cora")
-    permute(features, neighbors, labels, keys, 1234)
-    train_idx, val_idx, test_idx = split("cora")
-    print('das')
