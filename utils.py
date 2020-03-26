@@ -23,6 +23,7 @@ def read_cc(dataset):
     labels = []
     keys = []
     keys_to_idx = {}
+    classes = set()
 
     with open(content_file) as content:
         rows = csv.reader(content, delimiter="\t")
@@ -34,6 +35,7 @@ def read_cc(dataset):
             labels.append(label)
             neighbors.append([])
 
+            classes.add(label)
             keys_to_idx[key] = r
 
     valid_edges = 0
@@ -46,16 +48,28 @@ def read_cc(dataset):
                 continue
             cited = keys_to_idx[row[0]]
             citing = keys_to_idx[row[1]]
-            neighbors[citing].append([cited, 1])
+            neighbors[citing].append(np.array([cited, 1]))
             valid_edges += 1
 
     print("valid edges:", valid_edges)
     print("invalid edges:", invalid_edges)
 
     features = np.array(features)
+    neighbors = np.array(neighbors)
 
-    return features, neighbors, labels, keys
+    classes = sorted(classes)
+    labels = int_enc(labels, classes)
+    o_h_labels = one_hot_enc(len(classes), labels)
 
+    return features, neighbors, labels, o_h_labels, keys
+
+
+def int_enc(labels, classes):
+    int_labels = []
+    for l in range(len(labels)):
+        int_label = classes.index(labels[l])
+        int_labels.append(int_label)
+    return int_labels
 
 def read_p(dataset):
 
@@ -63,6 +77,7 @@ def read_p(dataset):
     neighbors = []
     labels = []
     keys = []
+    classes = set()
 
     t_dict = {}
     folder = os.path.join(data, dataset)
@@ -78,7 +93,9 @@ def read_p(dataset):
             else:
                 node_feature = np.zeros(500)
                 node = row.replace('\n', '').replace('w-', '').split('\t')
-                labels.append(int(node[1].replace('label=', '')))
+                label = int(node[1].replace('label=', ''))
+                labels.append(label)
+                classes.add(label)
                 keys.append(node[0])
                 for i in range(2, len(node)-1):
                     k, v = node[i].split('=')
@@ -95,27 +112,30 @@ def read_p(dataset):
                 neighbors[keys.index(node[1])].append(
                     np.array([keys.index(node[2]), int(node[0])]))
 
+    labels = int_enc(labels, sorted(classes))
     o_h_labels = one_hot_enc(n_classes=3, labels=labels)
 
     return np.array(features), np.array(neighbors), labels, o_h_labels, keys
 
 
 def one_hot_enc(n_classes, labels):
-
+    o_h_labels = []
     for l in range(len(labels)):
         label = labels[l]
-        labels[l] = np.zeros(n_classes)
-        labels[l][label-1] = 1
+        o_h_label = np.zeros(n_classes)
+        o_h_label[label] = 1
+        o_h_labels.append(o_h_label)
 
-    return np.array(labels)
+    return np.array(o_h_labels)
 
 
-def permute(features, neighbors, labels, keys, seed=None):
+def permute(features, neighbors, labels, o_h_labels, keys, seed=None):
 
     np.random.seed(seed=seed)
     permutation = np.random.permutation(len(keys))
     inv_permutation = np.argsort(permutation)
     labels = [labels[i] for i in permutation]
+    o_h_labels = [o_h_labels[i] for i in permutation]
     keys = [keys[p] for p in permutation]
     features = features[permutation]
     for n in neighbors:
@@ -124,7 +144,7 @@ def permute(features, neighbors, labels, keys, seed=None):
 
     neighbors = [neighbors[p] for p in permutation]
 
-    return features, neighbors, labels, keys
+    return features, neighbors, labels, o_h_labels, keys
 
 
 def split(dataset, size):
@@ -136,23 +156,28 @@ def split(dataset, size):
 
     train_size = 20*n_classes
 
-    mask_train = np.zeros(len(size), dtype=bool)
+    mask_train = np.zeros(size, dtype=bool)
     mask_train[np.arange(train_size)] = True
 
-    mask_val = np.zeros(len(size), dtype=bool)
+    mask_val = np.zeros(size, dtype=bool)
     mask_val[np.arange(train_size, train_size+500)] = True
 
-    mask_test = np.zeros(len(size), dtype=bool)
+    mask_test = np.zeros(size, dtype=bool)
     mask_test[np.arange(train_size+500, train_size+1500)] = True
 
     return mask_train, mask_test, mask_val
 
 
-if __name__ == '__main__':
-
+def main():
     dataset = "cora"
     seed = 1234
 
-    features, neighbors, labels, keys = read_dataset(dataset)
-    permute(features, neighbors, labels, keys, seed)
+    features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
+    permute(features, neighbors, labels, o_h_labels, keys, seed)
     train_idx, val_idx, test_idx = split(dataset, len(features))
+    
+    read_dataset("pubmed")
+
+
+if __name__ == '__main__':
+    main()
