@@ -22,7 +22,7 @@ class UnlabeldLoss(tf.keras.losses.Loss):
         dot_prod = tf.math.multiply(s, y_true)
         # Credits to https://www.tensorflow.org/api_docs/python/tf/math/log_sigmoid
         # loss = -1/self.N2 * tf.reduce_sum(tf.math.log_sigmoid(dot_prod))
-        loss = 1/self.N2 * tf.reduce_sum(tf.nn.softplus(-dot_prod))
+        loss = tf.reduce_sum(tf.nn.softplus(-dot_prod))
         return loss
 
 
@@ -43,7 +43,7 @@ def train(model, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, tes
 
         with train_summary_writer.as_default():
             tf.summary.scalar('loss_s', train_loss.result(), step=epoch)
-            # tf.summary.scalar('loss_u', train_loss_u.result(), step=epoch)
+            tf.summary.scalar('loss_u', train_loss_u.result(), step=epoch)
             tf.summary.scalar('accuracy', train_accuracy.result(), step=epoch)
 
         if epoch % log == 0:
@@ -61,7 +61,7 @@ def train(model, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, tes
 
         # Reset metrics every epoch
         train_loss.reset_states()
-        # train_loss_u.reset_states()
+        train_loss_u.reset_states()
         test_loss.reset_states()
         train_accuracy.reset_states()
         test_accuracy.reset_states()
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     
     modality = "T"          # can be T (transductive) or I (inductive)    
     
-    epochs = 10
+    epochs = 100
     val_period = 5        # each epoch validation
     log = 1                 # every two epochs print train loss and acc
     pre_train_iters = 100    # graph context pretrain iterations
