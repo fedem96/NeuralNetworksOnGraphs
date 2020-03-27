@@ -17,14 +17,14 @@ class Planetoid(tf.keras.Model):
         self.mask_val = mask_val
         self.mask_test = mask_test
 
-        self.r1 = args[0]#args.r1
-        self.r2 = args[1]#args.r2
-        self.q  = args[2]#args.q
-        self.d = args[3]#args.d
-        self.N1 = args[4]#args.N1
-        self.N2 = args[5]#args.N2
-        self.T1 = args[6]#args.T1
-        self.T2 = args[7]#args.T2
+        self.r1 = args.r1
+        self.r2 = args.r2
+        self.q  = args.q
+        self.d = args.d
+        self.N1 = args.n1
+        self.N2 = args.n2
+        self.T1 = args.t1
+        self.T2 = args.t2
 
 
     def call(self):
@@ -41,7 +41,7 @@ class Planetoid(tf.keras.Model):
             random_walk = [node]
             for _ in range(self.q):
                 neigh_size = [el[0] for el in self.neighbors[indices[random_walk[-1]]]
-                           if len(self.neighbors[indices[el[0]]]) > 0]
+                           if len(self.neighbors[el[0]]) > 0 and el[0] in indices]
                 if neigh_size == []:
                     continue
                 random_walk.append(np.random.choice(neigh_size))
@@ -58,7 +58,7 @@ class Planetoid(tf.keras.Model):
         else:
             if gamma == 1:
                 i, c = np.random.choice(indices, 2)
-                while self.labels[indices[i]] != self.labels[indices[c]]:
+                while (self.labels[indices[i]] != self.labels[indices[c]]).any():
                     c = np.random.choice(indices)
             elif gamma == -1:
                 i, c = np.random.choice(indices, 2)

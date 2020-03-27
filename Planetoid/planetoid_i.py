@@ -35,6 +35,10 @@ class Planetoid_I(Planetoid):
                 - "u" : unsupervised
         """
         if modality == "s":
+            # freeze embedding graph context layer
+            self.embedding.trainable = False
+            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = True, True, True
+
             h_f = self.h_k(inputs)
 
             h_l1 = self.par_embedding(inputs)
@@ -47,6 +51,10 @@ class Planetoid_I(Planetoid):
             return out
 
         elif modality == "u":
+            # freeze some layers 
+            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = False, False, False
+            self.embedding.trainable = True
+
             emb_in = self.par_embedding(inputs[0])
             emb_out = self.embedding(inputs[1])
 
@@ -56,7 +64,7 @@ class Planetoid_I(Planetoid):
     def context_batch(self):
         """ Algorithm 1: Sampling graph context (with negative sample) """
         while True:
-            size_valid_ind = len([not b for b in self.mask_test])
+            size_valid_ind = len(np.where(self.mask_test==False)[0])
             indices = np.random.permutation(size_valid_ind)
             j = 0
             while j < len(indices):
@@ -75,39 +83,49 @@ class Planetoid_I(Planetoid):
                 yield self.features[context_b_x[:,0]], context_b_x[:,1], np.array(context_b_y, dtype=np.float32)
                 j = k
 
-    def step_train(self, L_s, L_u, optimizer_u, optimizer_s, T1, T2):
-        """ One train iteration: graph context and label classification """
-        loss_s = 0
-        self.embedding.trainable = False
-        for epoch in range(1, T1+1):
+    def train_step(self, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, train_loss, train_loss_u, T1, T2):
+        """ One train epoch: graph context and label classification """
+
+        for it in range(1, T1+1):
             b_x, b_y, _ = next(self.labeled_batch())
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="s")
-                loss_s += L_s(out, b_y)
+                loss_s = L_s(b_y, out)
             grads = tape.gradient(loss_s, self.trainable_weights)
             optimizer_s.apply_gradients(zip(grads, self.trainable_weights))
+        
+            train_loss(loss_s)
+            train_accuracy(b_y, out)
 
-        loss_u = 0
-        self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = False, False, False
-        for epoch in range(1, T2+1):
+        for it in range(1, T2+1):
             b_x, b_c, b_y = next(self.context_batch())
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
-                loss_u += L_u(out, b_y)
+                loss_u = L_u(b_y, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
-        return loss_s, loss_u
+            train_loss_u(loss_u)
 
     def pretrain_step(self, L_u, optimizer_u, iters):
     
         loss_u = 0
-        for epoch in range(1, iters+1):
+        for it in range(1, iters+1):
             b_x, b_c, b_y = next(self.context_batch())
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
-                loss_u += L_u(out, b_y)
+                loss_u += L_u(b_y, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
         return loss_u
+
+    def test_step(self, L_s, test_accuracy, test_loss, mode="val"):
+
+        mask = self.mask_val if mode == "val" else self.mask_test
+
+        predictions = self.call(self.features[mask], modality="s")
+        loss = L_s(self.labels[mask], predictions)
+
+        test_loss(loss)
+        test_accuracy(self.labels[mask], predictions)

@@ -19,7 +19,7 @@ class Planetoid_T(Planetoid):
 
         # Embedding for graph context
         self.embedding = tf.keras.layers.Embedding(
-            self.features_size, self.embedding_size)
+            self.features_size, self.embedding_size, embeddings_initializer=tf.keras.initializers.GlorotUniform)
 
         # Hidden embedding representations
         self.h_l = tf.keras.layers.Dense(
@@ -36,9 +36,12 @@ class Planetoid_T(Planetoid):
                 - "u" : unsupervised
         """
         if modality == "s":
+            # freeze embedding during label classification
+            self.embedding.trainable = False
+            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = True, True, True
+
             h_f = self.h_k(inputs[0])
 
-            # freezed during label classification
             embs = self.embedding(inputs[1])
             h_e = self.h_l(embs)
 
@@ -48,6 +51,10 @@ class Planetoid_T(Planetoid):
             return out
 
         elif modality == "u":
+            # enable only embedding layer during unsupervised learning
+            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = False, False, False
+            self.embedding.trainable = True
+
             emb_in = self.embedding(inputs[:, 0])
             emb_out = self.embedding(inputs[:, 1])
 
@@ -72,43 +79,50 @@ class Planetoid_T(Planetoid):
                 yield np.array(context_b_x, dtype=np.float32), np.array(context_b_y, dtype=np.float32)
                 j = k
     
-    def step_train(self, L_s, L_u, optimizer_u, optimizer_s, T1, T2):
-        """ One train iteration: graph context and label classification """
-        loss_s = 0
-        self.embedding.trainable = False
-        for epoch in range(1, T1+1):
+    def train_step(self, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, train_loss, train_loss_u, T1, T2):
+        """ One train epoch: graph context and label classification """
+        
+        for it in range(1, T1+1):
             b_x, b_y, indices = next(self.labeled_batch())
             with tf.GradientTape() as tape:
                 out = self.call([b_x, indices], modality="s")
-                loss_s += tf.reduce_mean(L_s(out, b_y))
+                loss_s = L_s(b_y, out)
             grads = tape.gradient(loss_s, self.trainable_weights)
             optimizer_s.apply_gradients(zip(grads, self.trainable_weights))
 
-        loss_u = 0
-        # for l in self.layers:
-        #     l.trainable = not l.trainable
-        self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = False, False, False
-        self.embedding.trainable = True
-        for epoch in range(1, T2+1):
+            train_loss(loss_s)
+            train_accuracy(b_y, out)
+
+        for it in range(1, T2+1):
             b_x, b_y = next(self.context_batch())
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
-                loss_u += tf.reduce_mean(L_u(out, b_y))
+                loss_u = L_u(b_y, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
-        return loss_s, loss_u
+            train_loss_u(loss_u)
 
     def pretrain_step(self, L_u, optimizer_u, iters):
 
         loss_u = 0
-        self.embedding.trainable = True
-        for epoch in range(1, iters+1):
+        for it in range(1, iters+1):
             b_x, b_y = next(self.context_batch())
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
-                loss_u += tf.reduce_mean(L_u(out, b_y))
+                loss_u += L_u(b_y, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
         return loss_u
+
+    def test_step(self, L_s, test_accuracy, test_loss, mode="val"):
+
+        mask = self.mask_val if mode == "val" else self.mask_test
+        
+        indices_test = np.where(mask==True)[0]
+        predictions = self.call([self.features[mask], indices_test], modality="s")
+        loss = L_s(self.labels[mask], predictions)
+
+        test_loss(loss)
+        test_accuracy(self.labels[mask], predictions)

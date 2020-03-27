@@ -2,7 +2,8 @@ import os
 import csv
 import numpy as np
 
-data = 'data'
+DIR_NAME = os.path.dirname(os.path.realpath(__file__))
+data = DIR_NAME + '/data'
 
 
 def read_dataset(dataset):
@@ -31,7 +32,7 @@ def read_cc(dataset):
             key, fs, label = row[0], row[1:-1], row[-1]
 
             keys.append(key)
-            features.append(fs)
+            features.append(np.array(fs, dtype=np.float32))
             labels.append(label)
             neighbors.append([])
 
@@ -165,19 +166,17 @@ def split(dataset, size):
     mask_test = np.zeros(size, dtype=bool)
     mask_test[np.arange(size-1000, size)] = True
 
-    return mask_train, mask_test, mask_val
+    return mask_train, mask_val, mask_test
 
 
 def main():
-    dataset = "cora"
+    dataset = "pubmed"
     seed = 1234
 
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
     permute(features, neighbors, labels, o_h_labels, keys, seed)
     train_idx, val_idx, test_idx = split(dataset, len(features))
     
-    read_dataset("pubmed")
-
 
 if __name__ == '__main__':
     main()

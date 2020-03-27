@@ -1,0 +1,24 @@
+- model: Planetoid
+  description: Competitor-> Planetoid (Yang et al.)
+  operations:
+    train:
+      description: Train can be T (transductive) or I (inductive)
+      main: Planetoid/train
+      flags:
+        GUILD_HOME: "logs/"
+        dataset: 
+          default: "cora"
+          choices: ["cora", "pubmed", "citeseer"]
+        modality: 
+          default: "I"
+          choices: ["T", "I"]
+        epochs:
+          default: 10
+        val_period:
+          default: 5
+        log:
+          default: 1
+        pre_train_iters:
+          default: 100
+
+    
