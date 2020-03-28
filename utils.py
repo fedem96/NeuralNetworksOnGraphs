@@ -168,6 +168,35 @@ def split(dataset, size):
 
     return mask_train, mask_val, mask_test
 
+def adjacency_matrix(neighbors):
+    num_nodes = len(neighbors)
+    A = np.zeros((num_nodes, num_nodes))
+
+    for n, adjacency_list in enumerate(neighbors):
+        for edge in adjacency_list:
+            neighbor = edge[0]
+            weight = edge[1]
+            A[n][neighbor] = weight
+            A[neighbor][n] = weight
+            # A must se symmetric
+            # TODO: what if different weights?
+
+    return A
+
+def degree_matrix(A):
+    D = np.diag(np.sum(A, axis=1))
+    return D
+
+def semi_inverse_degree_matrix(A):
+    D_minus_half = np.diag( np.power(np.sum(A, axis=1), -1/2) )
+    return D_minus_half
+
+def normalized_laplacian_matrix(A):
+    n = len(A)
+    D_minus_half = semi_inverse_degree_matrix(A)
+    norm_L = np.identity(n) - np.matmul(np.matmul(D_minus_half, A), D_minus_half)
+    return norm_L
+
 
 def main():
     dataset = "pubmed"
