@@ -13,7 +13,6 @@ class Chebychev(tf.keras.layers.Layer):
 
     def __init__(self, laplacian, K, num_filters, activation):
         super().__init__()
-        print("init")
 
         self._dtype = tf.float32
 
@@ -53,13 +52,10 @@ class Chebychev(tf.keras.layers.Layer):
         return tf.cast( tf.sparse.SparseTensor(indices, coo_polys.data, coo_polys.shape), self._dtype )
 
     def build(self, input_shape):
-        print("build")
-        assert len(input_shape) == 2
         self.fin = input_shape[1]
-        self.theta = self.add_weight(shape=[self.K, self.fin, self.fout], initializer='glorot_uniform', dtype=self._dtype)#, regularizer=self.kernel_regularizer, constraint=self.kernel_constraint)
+        self.theta = self.add_weight(shape=[self.K, self.fin, self.fout], initializer='glorot_uniform', dtype=self._dtype)
 
     def call(self, x):
-        print("call")
         x = tf.cast(x, self._dtype)        
         tx = tf.sparse.sparse_dense_matmul(self.polynomials, x) # shapes: (K*n, n)    *    (n, fin)    -> (K*n, fin)
         tx = tf.reshape(tx, [self.K, self.n, self.fin])         # shapes: (K*n, fin)                   -> (K, n, fin)

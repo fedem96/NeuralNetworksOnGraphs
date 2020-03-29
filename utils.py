@@ -71,7 +71,7 @@ def int_enc(labels, classes):
     for l in range(len(labels)):
         int_label = classes.index(labels[l])
         int_labels.append(int_label)
-    return int_labels
+    return np.array(int_labels)
 
 def read_p(dataset):
 
@@ -136,8 +136,8 @@ def permute(features, neighbors, labels, o_h_labels, keys, seed=None):
     np.random.seed(seed=seed)
     permutation = np.random.permutation(len(keys))
     inv_permutation = np.argsort(permutation)
-    labels = [labels[i] for i in permutation]
-    o_h_labels = [o_h_labels[i] for i in permutation]
+    labels = labels[permutation]
+    o_h_labels = o_h_labels[permutation]
     keys = [keys[p] for p in permutation]
     features = features[permutation]
     for n in neighbors:
@@ -171,7 +171,6 @@ def split(dataset, size):
 
 def adjacency_matrix(neighbors):
     num_nodes = len(neighbors)
-    # indices = []
     row_ind = []
     col_ind = []
     values = []
@@ -180,30 +179,24 @@ def adjacency_matrix(neighbors):
         for edge in adjacency_list:
             neighbor = edge[0]
             weight = edge[1]
-            # indices.append([n, neighbor])
-            # indices.append([neighbor, n])
             row_ind.append(n); col_ind.append(neighbor); values.append(weight)
             row_ind.append(neighbor); col_ind.append(n); values.append(weight)
             # the adjacency matrix must se symmetric
             # TODO: symmetrize non-DAGs (i.e. treat the case of two edges between a pair of nodes)
 
-    # return SparseTensor(indices, values, dense_shape=[num_nodes, num_nodes])
     return sparse.csr_matrix((values, (row_ind, col_ind)), shape=[num_nodes, num_nodes])
 
 def degree_matrix(A):
-    # D = np.diag(np.sum(A, axis=1))
     D = np.diag(np.sum(A, axis=1))
     return D
 
 def semi_inverse_degree_matrix(A):
-    # D_minus_half = np.diag( np.power(np.sum(A, axis=1), -1/2) )
     D_minus_half = sparse.diags( np.power(np.sum(A, axis=0), -1/2), [0], shape=A.shape )
     return D_minus_half
 
 def normalized_laplacian_matrix(A):
     n = A.shape[0]
     D_minus_half = semi_inverse_degree_matrix(A)
-    # norm_L = np.identity(n) - np.matmul(np.matmul(D_minus_half, A), D_minus_half)
     norm_L = sparse.identity(n) - D_minus_half.dot(A).dot(D_minus_half)
     return norm_L
 
