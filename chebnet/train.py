@@ -8,7 +8,7 @@ from utils import *
 
 if __name__ == "__main__":
     
-    max_order = 2
+    K = 3
     dataset_name = "cora"
 
     # read dataset
@@ -26,22 +26,21 @@ if __name__ == "__main__":
     print("calculating laplacian matrix")
     norm_L = normalized_laplacian_matrix(A)
 
-    num_nodes = len(A)
+    num_nodes = A.shape[0]
     num_features = len(features[0])
 
     print("defining model")
     # input_shape: (num_nodes, features)
     model = tf.keras.Sequential([
-        Chebychev(laplacian=norm_L, max_order=max_order, num_filters=1),
-        # Chebychev(laplacian=norm_L, max_order=max_order, num_filters=8),
-        # tf.keras.layers.Dense(8),
-        # tf.keras.layers.Dense(1, activation='sigmoid')
+        Chebychev(norm_L, K, num_filters=8, activation="relu"),
+        Chebychev(norm_L, K, num_filters=16, activation="relu"),
+        tf.keras.layers.Dense(32, activation="relu"),
+        tf.keras.layers.Dense(1, activation='sigmoid')
     ])
     model.compile(optimizer='adam',
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
 
-    x = tf.random.normal([num_nodes, 1])
-    print("X:", x)
-    preds = model.predict(x, batch_size=len(x))
+    preds = model.predict(features, batch_size=num_nodes)
+    print("preds")
     print(preds)

@@ -1,6 +1,7 @@
 import os
 import csv
 import numpy as np
+import scipy.sparse as sparse
 
 DIR_NAME = os.path.dirname(os.path.realpath(__file__))
 data = DIR_NAME + '/data'
@@ -170,31 +171,40 @@ def split(dataset, size):
 
 def adjacency_matrix(neighbors):
     num_nodes = len(neighbors)
-    A = np.zeros((num_nodes, num_nodes))
+    # indices = []
+    row_ind = []
+    col_ind = []
+    values = []
 
     for n, adjacency_list in enumerate(neighbors):
         for edge in adjacency_list:
             neighbor = edge[0]
             weight = edge[1]
-            A[n][neighbor] = weight
-            A[neighbor][n] = weight
-            # A must se symmetric
-            # TODO: what if different weights?
+            # indices.append([n, neighbor])
+            # indices.append([neighbor, n])
+            row_ind.append(n); col_ind.append(neighbor); values.append(weight)
+            row_ind.append(neighbor); col_ind.append(n); values.append(weight)
+            # the adjacency matrix must se symmetric
+            # TODO: symmetrize non-DAGs (i.e. treat the case of two edges between a pair of nodes)
 
-    return A
+    # return SparseTensor(indices, values, dense_shape=[num_nodes, num_nodes])
+    return sparse.csr_matrix((values, (row_ind, col_ind)), shape=[num_nodes, num_nodes])
 
 def degree_matrix(A):
+    # D = np.diag(np.sum(A, axis=1))
     D = np.diag(np.sum(A, axis=1))
     return D
 
 def semi_inverse_degree_matrix(A):
-    D_minus_half = np.diag( np.power(np.sum(A, axis=1), -1/2) )
+    # D_minus_half = np.diag( np.power(np.sum(A, axis=1), -1/2) )
+    D_minus_half = sparse.diags( np.power(np.sum(A, axis=0), -1/2), [0], shape=A.shape )
     return D_minus_half
 
 def normalized_laplacian_matrix(A):
-    n = len(A)
+    n = A.shape[0]
     D_minus_half = semi_inverse_degree_matrix(A)
-    norm_L = np.identity(n) - np.matmul(np.matmul(D_minus_half, A), D_minus_half)
+    # norm_L = np.identity(n) - np.matmul(np.matmul(D_minus_half, A), D_minus_half)
+    norm_L = sparse.identity(n) - D_minus_half.dot(A).dot(D_minus_half)
     return norm_L
 
 

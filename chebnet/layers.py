@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
+import scipy
 
-# TODO: sparse implementation
 class Chebychev(tf.keras.layers.Layer):
 
     # Chebychev Spectral Convolutional Layer
@@ -11,51 +11,58 @@ class Chebychev(tf.keras.layers.Layer):
     # T(k, L) = 2L * T(k-1, L) - T(k-2, L)
     # computes: sum([theta[k] * T(k, L) * x  for k in K])
 
-    def __init__(self, laplacian, max_order, num_filters):
+    def __init__(self, laplacian, K, num_filters, activation):
         super().__init__()
         print("init")
 
-        self.bilaplacian = tf.cast( tf.constant(2 * laplacian), tf.float16)
-        self.max_order = max_order
-        self.n = len(self.bilaplacian)
-        self.f = -1
-        self.num_filters = num_filters
+        self._dtype = tf.float32
 
-        std = 0.1 
-        self.theta =  tf.Variable(tf.random.normal([num_filters, max_order+1], stddev=std, dtype=tf.float16), dtype=tf.float16, name="theta")
-        self.polynomials = self._chebychev_polynomials()
+        self.laplacian = laplacian
+
+        self.K = K                       # number of chebychev orders
+        self.n = self.laplacian.shape[0] # number of nodes
+        self.fin = -1                    # number of input features
+        self.fout = num_filters          # number of output features
+        self.polynomials = self._chebychev_polynomials()  # pre-calculate Chebychev polynomials from order 0 to K-1
+        self.activation = tf.keras.activations.get(activation)
 
     def _chebychev_polynomials(self):
+        # returns a SparseTensor of shape (K*n, n) representing the K Chebychev matrices of shape (n, n)
 
-        # 0-order
-        polys = tf.cast(tf.eye(self.n), tf.float16)
+        # 0-order polynomial
+        tmp_2 = scipy.sparse.eye(self.n)  # temporary value (used in recurrent formulation)
+        polys = scipy.sparse.eye(self.n)  # polys will contain all Chebychev's polynomials (v-stacked)
 
-        # 1-order
-        if self.max_order >= 1:
-            polys = tf.stack([polys, self.bilaplacian])
+        # 1-order polynomial
+        if self.K > 1:
+            tmp_1 = self.laplacian        # temporary value (used in recurrent formulation)
+            polys = scipy.sparse.vstack([polys, self.laplacian])
 
-        for k in range(2, self.max_order+1):
-            # k-order
-            poly_k = tf.matmul(self.bilaplacian, polys[k-1]) - polys[k-2]
-            poly_k = tf.expand_dims(poly_k, 0)
-            polys = tf.concat([polys, poly_k], 0)
+        for k in range(2, self.K):
+            # k-order polynomial
+            poly_k = 2 * self.laplacian.dot(tmp_1) - tmp_2   # Chebychev recurrent formulation for fast filtering
+            polys = scipy.sparse.vstack([polys, poly_k])
 
-        return tf.reshape(polys, [self.max_order+1, self.n*self.n])
+            # update auxiliary matrices
+            tmp_2 = tmp_1
+            tmp_1 = poly_k
+
+        # return polynomials (transformed from scipy.sparse.csr_matrix to tf.sparse.SparseTensor)
+        coo_polys = polys.tocoo()
+        indices = np.mat([coo_polys.row, coo_polys.col]).transpose()
+        return tf.cast( tf.sparse.SparseTensor(indices, coo_polys.data, coo_polys.shape), self._dtype )
 
     def build(self, input_shape):
         print("build")
-        print("input_shape:", input_shape)
         assert len(input_shape) == 2
-        self.f = input_shape[1]
+        self.fin = input_shape[1]
+        self.theta = self.add_weight(shape=[self.K, self.fin, self.fout], initializer='glorot_uniform', dtype=self._dtype)#, regularizer=self.kernel_regularizer, constraint=self.kernel_constraint)
 
     def call(self, x):
         print("call")
-        print("x:", x)
-        x = tf.cast(x, tf.float16)
-        x = tf.reshape(x, [self.n, self.f])
-        tp = tf.matmul(self.theta, self.polynomials)
-        tp = tf.reshape(tp, [self.num_filters, self.n, self.n])
-        o = tf.matmul(tp, x)
-        o = tf.transpose(o, [1, 0, 2])
-        o = tf.reshape(o, [self.n, self.num_filters * self.f])
-        return o
+        x = tf.cast(x, self._dtype)        
+        tx = tf.sparse.sparse_dense_matmul(self.polynomials, x) # shapes: (K*n, n)    *    (n, fin)    -> (K*n, fin)
+        tx = tf.reshape(tx, [self.K, self.n, self.fin])         # shapes: (K*n, fin)                   -> (K, n, fin)
+        o = tf.matmul(tf.cast(tx, self._dtype), self.theta)     # shapes: (K, n, fin) * (K, fin, fout) -> (K, n, fout)
+        o = tf.reduce_sum(o, 0)                                 # shapes: (K, n, fout)                 -> (n, fout)
+        return o if self.activation is None else self.activation(o)
