@@ -5,9 +5,9 @@ import scipy
 class Chebychev(tf.keras.layers.Layer):
 
     # Chebychev Spectral Convolutional Layer
-    # T(k, L): chebychev polinomial of order k of laplacian matrix L
+    # T(k, L): chebychev polinomial of order k of scaled normalized laplacian matrix L
     # T(0, L) = I
-    # T(1, L) = 2L
+    # T(1, L) = L
     # T(k, L) = 2L * T(k-1, L) - T(k-2, L)
     # computes: sum([theta[k] * T(k, L) * x  for k in K])
 

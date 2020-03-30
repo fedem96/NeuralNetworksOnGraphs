@@ -29,7 +29,7 @@ class ChebNet(tf.keras.models.Sequential):
     def train(self, X, y, epochs):
         for epoch in tqdm(range(epochs)):
             loss, y_pred = self.train_step(X, y)
-            tqdm.write("\repoch: {}/{}, loss: {:.4f}, accuracy: {:.4f}".format(epoch, epochs, loss, float(ChebNet.accuracy_mask(y, y_pred))))
+            tqdm.write("epoch: {}/{}, loss: {:.4f}, accuracy: {:.4f}".format(epoch, epochs, loss, float(ChebNet.accuracy_mask(y, y_pred))))
 
     def train_step(self, X, y):
         with tf.GradientTape() as tape:
