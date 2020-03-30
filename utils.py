@@ -148,21 +148,35 @@ def permute(features, neighbors, labels, o_h_labels, keys, seed=None):
 
     return features, neighbors, labels, o_h_labels, keys
 
+def get_num_classes(dataset):
+    if dataset == "citeseer":
+        return 6
+    elif dataset == "cora":
+        return 7
+    elif dataset == "pudmed":
+        return 3
 
-def split(dataset, size):
-    n_classes = 3
-    if dataset == "cora":
-        n_classes = 7
-    elif dataset == "citeseer":
-        n_classes = 6
+def split(dataset, labels):
+    n_classes = get_num_classes(dataset)
+    size = len(labels)
+    counters = np.zeros(n_classes)
 
     train_size = 20*n_classes
-
     mask_train = np.zeros(size, dtype=bool)
-    mask_train[np.arange(train_size)] = True
-
     mask_val = np.zeros(size, dtype=bool)
-    mask_val[np.arange(train_size, train_size+500)] = True
+    t = v = i = 0
+    while t < train_size:
+        label = labels[i]
+        if counters[label] < 20:  # 20 nodes per class in the training set
+            mask_train[i] = True
+            counters[label] += 1
+            t += 1
+        elif v < 500:
+            mask_val[i] = True
+            v += 1
+        i += 1
+
+    mask_val[np.arange(train_size + v, train_size+500)] = True
 
     mask_test = np.zeros(size, dtype=bool)
     mask_test[np.arange(size-1000, size)] = True
@@ -202,12 +216,12 @@ def normalized_laplacian_matrix(A):
 
 
 def main():
-    dataset = "pubmed"
+    dataset = "cora"
     seed = 1234
 
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
     permute(features, neighbors, labels, o_h_labels, keys, seed)
-    train_idx, val_idx, test_idx = split(dataset, len(features))
+    train_idx, val_idx, test_idx = split(dataset, len(features), labels)
     
 
 if __name__ == '__main__':
