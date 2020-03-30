@@ -37,7 +37,7 @@ class Planetoid_I(Planetoid):
         if modality == "s":
             # freeze embedding graph context layer
             self.embedding.trainable = False
-            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = True, True, True
+            self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True 
 
             h_f = self.h_k(inputs)
 
@@ -52,13 +52,14 @@ class Planetoid_I(Planetoid):
 
         elif modality == "u":
             # freeze some layers 
-            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = False, False, False
+            self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = False
             self.embedding.trainable = True
 
-            emb_in = self.par_embedding(inputs[0])
-            emb_out = self.embedding(inputs[1])
+            emb_i = self.par_embedding(inputs[0])
+            emb_c = self.embedding(inputs[1])
 
-            out = tf.multiply(emb_in, emb_out)
+            out = tf.multiply(emb_i, emb_c)
+
             return out
 
     def context_batch(self):
@@ -107,18 +108,16 @@ class Planetoid_I(Planetoid):
 
             train_loss_u(loss_u)
 
-    def pretrain_step(self, L_u, optimizer_u, iters):
+    def pretrain_step(self, L_u, optimizer_u, train_loss_u, iters):
     
-        loss_u = 0
         for it in range(1, iters+1):
             b_x, b_c, b_y = next(self.context_batch())
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
-                loss_u += L_u(b_y, out)
+                loss_u = L_u(b_y, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
-
-        return loss_u
+            train_loss_u(loss_u)
 
     def test_step(self, L_s, test_accuracy, test_loss, mode="val"):
 

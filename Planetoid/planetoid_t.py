@@ -18,8 +18,7 @@ class Planetoid_T(Planetoid):
             self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Embedding for graph context
-        self.embedding = tf.keras.layers.Embedding(
-            self.features_size, self.embedding_size, embeddings_initializer=tf.keras.initializers.GlorotUniform)
+        self.embedding = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
 
         # Hidden embedding representations
         self.h_l = tf.keras.layers.Dense(
@@ -38,7 +37,7 @@ class Planetoid_T(Planetoid):
         if modality == "s":
             # freeze embedding during label classification
             self.embedding.trainable = False
-            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = True, True, True
+            self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True
 
             h_f = self.h_k(inputs[0])
 
@@ -52,13 +51,13 @@ class Planetoid_T(Planetoid):
 
         elif modality == "u":
             # enable only embedding layer during unsupervised learning
-            self.h_k.trainable, self.h_l.trainable, self.pred_layer.trainable = False, False, False
+            self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = False
             self.embedding.trainable = True
 
-            emb_in = self.embedding(inputs[:, 0])
-            emb_out = self.embedding(inputs[:, 1])
+            emb_i = self.embedding(inputs[:, 0])
+            emb_c = self.embedding(inputs[:, 1])
 
-            out = tf.multiply(emb_in, emb_out)
+            out = tf.multiply(emb_i, emb_c)
             return out
 
     def context_batch(self):
@@ -76,7 +75,7 @@ class Planetoid_T(Planetoid):
                     context_b_x.append([i, c])
                     context_b_y.append(gamma)
 
-                yield np.array(context_b_x, dtype=np.float32), np.array(context_b_y, dtype=np.float32)
+                yield np.array(context_b_x, dtype=np.int32), np.array(context_b_y, dtype=np.int32)
                 j = k
     
     def train_step(self, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, train_loss, train_loss_u, T1, T2):
@@ -103,18 +102,16 @@ class Planetoid_T(Planetoid):
 
             train_loss_u(loss_u)
 
-    def pretrain_step(self, L_u, optimizer_u, iters):
+    def pretrain_step(self, L_u, optimizer_u, train_loss_u, iters):
 
-        loss_u = 0
         for it in range(1, iters+1):
             b_x, b_y = next(self.context_batch())
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
-                loss_u += L_u(b_y, out)
+                loss_u = L_u(b_y, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
-
-        return loss_u
+            train_loss_u(loss_u)
 
     def test_step(self, L_s, test_accuracy, test_loss, mode="val"):
 

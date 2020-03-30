@@ -17,14 +17,14 @@ class Planetoid(tf.keras.Model):
         self.mask_val = mask_val
         self.mask_test = mask_test
 
-        self.r1 = args.r1
-        self.r2 = args.r2
-        self.q  = args.q
-        self.d = args.d
-        self.N1 = args.n1
-        self.N2 = args.n2
-        self.T1 = args.t1
-        self.T2 = args.t2
+        self.r1 = args['r1']
+        self.r2 = args['r2']
+        self.q  = args['q']
+        self.d = args['d']
+        self.N1 = args['n1']
+        self.N2 = args['n2']
+        self.T1 = args['t1']
+        self.T2 = args['t2']
 
 
     def call(self):
