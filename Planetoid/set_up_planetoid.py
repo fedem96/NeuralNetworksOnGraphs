@@ -34,8 +34,8 @@ def set_up_planetoid(embedding_size, dataset, seed, modality, epochs, val_period
 
     # Preprocess on data
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
-    permute(features, neighbors, labels, o_h_labels, keys, seed)
-    train_idx, val_idx, test_idx = split(dataset, len(features))
+    features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys, seed)
+    train_idx, val_idx, test_idx = split(dataset, labels)
 
     # Define model, loss, metrics and optimizers
     if modality == "I":

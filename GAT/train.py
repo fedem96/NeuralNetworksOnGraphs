@@ -20,7 +20,7 @@ def train(model, x_train, y_train, x_val, y_val, epochs, optimizer,
 
         print("Train Loss: {:.3f}, Train Accuracy: {:.2f}%".format(train_loss.result(), train_acc.result()*100))
 
-        ''' if epoch % val_period == 0:
+        if epoch % val_period == 0:
 
             predictions = model(x_val)
             loss = loss_fn(y_val, predictions)
@@ -29,7 +29,7 @@ def train(model, x_train, y_train, x_val, y_val, epochs, optimizer,
             val_acc(y_val, predictions)
 
             print("\nEpoch {:d}, Validation Loss: {:.3f}, Validation Accuracy: {:.2f}%\n".format(epoch, val_loss.result(), val_acc.result()*100))
- '''
+ 
     return
 
 

@@ -54,9 +54,9 @@ def main(dataset_name, training_epochs):
 
     # Convert labels to categorical one-hot encoding
     #model.fit(features, y_train, epochs=training_epochs, batch_size=num_nodes, shuffle=False)
-    model.train(X_train, y_train, epochs=training_epochs)
+    model.train(features, y_train, epochs=training_epochs)
 
-    print("validation accuracy", eval_accuracy(model, X_val, y_val, mask_val))
+    print("validation accuracy", eval_accuracy(model, features, y_val, mask_val))
     
 
 if __name__ == "__main__":

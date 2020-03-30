@@ -18,7 +18,7 @@ def set_up_gat(dataset, epochs, batch_size, val_period, log, seed):
     # Preprocess on data
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
     features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys, seed)
-    train_idx, val_idx, test_idx = split(dataset, len(features))
+    train_idx, val_idx, test_idx = split(dataset, labels)
 
     loss_fn = tf.keras.losses.CategoricalCrossentropy()
 
