@@ -2,6 +2,7 @@ import os
 import csv
 import numpy as np
 import scipy.sparse as sparse
+from scipy.sparse.linalg import eigs
 
 DIR_NAME = os.path.dirname(os.path.realpath(__file__))
 data = DIR_NAME + '/data'
@@ -79,6 +80,7 @@ def read_p(dataset):
     neighbors = []
     labels = []
     keys = []
+    keys_to_idx = {}
     classes = set()
 
     t_dict = {}
@@ -87,32 +89,34 @@ def read_p(dataset):
     edges = os.path.join(folder, 'data/Pubmed-Diabetes.DIRECTED.cites.tab')
 
     with open(nodes) as csvFile:
-        for idx, row in enumerate(csvFile):
-            if (idx < 2):
-                if ('cat' in row):
-                    indices = row.replace('\n', '').replace(
-                        'numeric:w-', '').replace(':0.0', '').split('\t')[1:]
-            else:
-                node_feature = np.zeros(500)
-                node = row.replace('\n', '').replace('w-', '').split('\t')
-                label = int(node[1].replace('label=', ''))
-                labels.append(label)
-                classes.add(label)
-                keys.append(node[0])
-                for i in range(2, len(node)-1):
-                    k, v = node[i].split('=')
-                    node_feature[indices.index(k)] = v
-                features.append(node_feature)
+        rows = list(csvFile)
+        indices = rows[1].replace('\n', '').replace('numeric:w-', '').replace(':0.0', '').split('\t')[1:]
+        keys_to_word_idx = {indices[i]: i for i in range(len(indices))}
+        rows = rows[2:]
+        for row in rows:
+            node_feature = np.zeros(500)
+
+            node = row.replace('\n', '').replace('w-', '').split('\t')
+            label = int(node[1].replace('label=', ''))
+            labels.append(label)
+            classes.add(label)
+            keys_to_idx[node[0]] = len(keys)
+            keys.append(node[0])
+
+
+            for i in range(2, len(node)-1):
+                k, v = node[i].split('=')
+                node_feature[keys_to_word_idx[k]] = v
+            features.append(node_feature)
 
     neighbors = [[] for i in range(len(features))]
 
     with open(edges) as csvFile:
-        for idx, row in enumerate(csvFile):
-            if (idx >= 2):
-                node = row.replace('\n', '').replace('paper:', '').split('\t')
-                node.remove('|')
-                neighbors[keys.index(node[1])].append(
-                    np.array([keys.index(node[2]), int(node[0])]))
+        rows = list(csvFile)[2:]
+        for row in rows:
+            node = row.replace('\n', '').replace('paper:', '').split('\t')
+            node.remove('|')
+            neighbors[keys_to_idx[node[1]]].append(np.array([keys_to_idx[node[2]], int(node[0])]))
 
     labels = int_enc(labels, sorted(classes))
     o_h_labels = one_hot_enc(n_classes=3, labels=labels)
@@ -148,12 +152,18 @@ def permute(features, neighbors, labels, o_h_labels, keys, seed=None):
 
     return features, neighbors, labels, o_h_labels, keys
 
+def normalize_features(features):
+    rowsum = np.array(features.sum(1))
+    normalized_features = features / np.broadcast_to(rowsum, features.T.shape).T
+    normalized_features[np.isinf(normalized_features)] = 0
+    return normalized_features
+
 def get_num_classes(dataset):
     if dataset == "citeseer":
         return 6
     elif dataset == "cora":
         return 7
-    elif dataset == "pudmed":
+    elif dataset == "pubmed":
         return 3
 
 def split(dataset, labels):
@@ -214,14 +224,22 @@ def normalized_laplacian_matrix(A):
     norm_L = sparse.identity(n) - D_minus_half.dot(A).dot(D_minus_half)
     return norm_L
 
+def scaled_normalized_laplacian_matrix(A):
+    n = A.shape[0]
+    norm_L = normalized_laplacian_matrix(A)
+    lambda_max = eigs(norm_L, k=1, which='LM', return_eigenvectors=True)[0] # Largest-Magnitude eigenvalue of norm_L
+    scaled_norm_L = float(2/lambda_max.real) * norm_L - sparse.identity(n)
+    return scaled_norm_L
+
 
 def main():
-    dataset = "cora"
+    dataset = "pubmed"
     seed = 1234
 
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
+    features = normalize_features(features)
     permute(features, neighbors, labels, o_h_labels, keys, seed)
-    train_idx, val_idx, test_idx = split(dataset, len(features), labels)
+    train_idx, val_idx, test_idx = split(dataset, labels)
     
 
 if __name__ == '__main__':
