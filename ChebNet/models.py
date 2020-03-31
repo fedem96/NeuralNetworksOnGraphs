@@ -17,11 +17,11 @@ class ChebNet(tf.keras.models.Sequential):
         self.K = K
 
         self.compile(
-            loss='categorical_crossentropy',
+            loss=self.non_zero_loss,
             optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
-            # metrics=[ChebNet.accuracy_mask]
+            metrics=[ChebNet.accuracy_mask]
         )
-
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
         self.loss_fn = tf.keras.losses.get('categorical_crossentropy')
         self.l2_weight = 5e-4
 

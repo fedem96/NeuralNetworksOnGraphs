@@ -9,7 +9,7 @@ class Chebychev(tf.keras.layers.Layer):
     # T(0, L) = I
     # T(1, L) = L
     # T(k, L) = 2L * T(k-1, L) - T(k-2, L)
-    # computes: sum([theta[k] * T(k, L) * x  for k in K])
+    # computes: sum([theta[k] * T(k, L) * x  for k in range(K)])
 
     def __init__(self, laplacian, K, num_filters, activation):
         super().__init__()
@@ -56,7 +56,7 @@ class Chebychev(tf.keras.layers.Layer):
         self.theta = self.add_weight(shape=[self.K, self.fin, self.fout], initializer='glorot_uniform', dtype=self._dtype)
 
     def call(self, x):
-        x = tf.cast(x, self._dtype)        
+        x = tf.cast(x, self._dtype)
         tx = tf.sparse.sparse_dense_matmul(self.polynomials, x) # shapes: (K*n, n)    *    (n, fin)    -> (K*n, fin)
         tx = tf.reshape(tx, [self.K, self.n, self.fin])         # shapes: (K*n, fin)                   -> (K, n, fin)
         o = tf.matmul(tf.cast(tx, self._dtype), self.theta)     # shapes: (K, n, fin) * (K, fin, fout) -> (K, n, fout)

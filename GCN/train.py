@@ -1,7 +1,7 @@
 import tensorflow as tf
 import argparse
 
-from models import ChebNet
+from models import GCN
 
 import sys, os
 sys.path.insert(1, os.path.dirname(os.path.abspath('__file__')))
@@ -34,23 +34,20 @@ def main(dataset_name, training_epochs):
     # get masks
     print("obtaining masks")
     mask_train, mask_val, mask_test = split(dataset_name, labels)
-    # X_train = np.multiply(features, np.broadcast_to(mask_train.T, features.T.shape).T )
-    # X_val   = np.multiply(features, np.broadcast_to(mask_val.T,   features.T.shape).T )
-    # X_test  = np.multiply(features, np.broadcast_to(mask_test.T,  features.T.shape).T )
     y_train = np.multiply(o_h_labels, np.broadcast_to(mask_train.T, o_h_labels.T.shape).T )
     y_val   = np.multiply(o_h_labels, np.broadcast_to(mask_val.T,   o_h_labels.T.shape).T )
     y_test  = np.multiply(o_h_labels, np.broadcast_to(mask_test.T,  o_h_labels.T.shape).T )
 
     print("calculating adjacency matrix")
     A = adjacency_matrix(neighbors)
-    print("calculating scaled normalized laplacian matrix")
-    scaled_norm_L = scaled_normalized_laplacian_matrix(A)
+    print("calculating renormalized matrix")
+    renormalized_matrix = renormalization_matrix(A)
 
     num_nodes = A.shape[0]
     num_features = len(features[0])
 
     print("defining model")
-    model = ChebNet(scaled_norm_L, K, num_classes)  # input_shape: (num_nodes, features) -> output_shape: (num_nodes, num_classes)
+    model = GCN(renormalized_matrix, num_classes)  # input_shape: (num_nodes, features) -> output_shape: (num_nodes, num_classes)
 
     print("begin training")
     model.train(features, y_train, epochs=training_epochs)
@@ -60,7 +57,7 @@ def main(dataset_name, training_epochs):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train a chebnet')
-    parser.add_argument("-d", "--dataset", help="dataset to use", default="pubmed", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])
     parser.add_argument("-e", "--epochs", help="number of training epochs", default=10, type=int)
     args = parser.parse_args()
 

@@ -231,6 +231,12 @@ def scaled_normalized_laplacian_matrix(A):
     scaled_norm_L = float(2/lambda_max.real) * norm_L - sparse.identity(n)
     return scaled_norm_L
 
+def renormalization_matrix(A):
+    n = A.shape[0]
+    renorm_A = A + sparse.identity(n)
+    renorm_D_minus_half = semi_inverse_degree_matrix(renorm_A)
+    renormalized_matrix = renorm_D_minus_half.dot(A).dot(renorm_D_minus_half)
+    return renormalized_matrix
 
 def main():
     dataset = "pubmed"
