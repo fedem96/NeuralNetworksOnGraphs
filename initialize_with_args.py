@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 
-sys.path.insert(1, os.path.dirname(os.path.abspath('__file__')))
+# sys.path.insert(1, os.path.dirname(os.path.abspath('__file__')))
 
 from Planetoid.set_up_planetoid import set_up_planetoid
 from GAT.set_up_gat import set_up_gat

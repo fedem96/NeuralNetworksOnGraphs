@@ -23,6 +23,7 @@ def main(dataset_name, training_epochs):
     data_seed = 0
     net_seed = 0
     tf.random.set_seed(net_seed)
+    np.random.seed(data_seed)
 
     # read dataset
     print("reading dataset")

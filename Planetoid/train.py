@@ -1,9 +1,7 @@
 import tensorflow as tf
 import numpy as np
-import sys
-import os
+import sys, os
 import datetime
-import argparse
 
 
 def train(model, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, test_accuracy, train_loss, train_loss_u, test_loss,
@@ -15,6 +13,8 @@ def train(model, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, tes
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
     val_summary_writer = tf.summary.create_file_writer(val_log_dir)
 
+    max_t_acc = 0
+    patience = 20
    
     for epoch in range(1, epochs+1):
 
@@ -28,7 +28,7 @@ def train(model, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, tes
             tf.summary.scalar('accuracy', train_accuracy.result(), step=epoch)
 
         if epoch % log == 0:
-            print("Train Loss: s {:.3f} u {:.3f}, Train Accuracy: {:.2f}%".format(train_loss.result(), train_loss_u.result(), train_accuracy.result()*100))
+            print("Train Loss: s {:.3f} u {:.3f}, Train Accuracy: {:.3f}".format(train_loss.result(), train_loss_u.result(), train_accuracy.result()))
 
         if epoch % val_period == 0:
             
@@ -38,7 +38,15 @@ def train(model, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, tes
                 tf.summary.scalar('loss', test_loss.result(), step=epoch)
                 tf.summary.scalar('accuracy', test_accuracy.result(), step=epoch)
             
-            print("\nEpoch {:d}, Validation Loss: {:.3f}, Validation Accuracy: {:.2f}%\n".format(epoch, test_loss.result(), test_accuracy.result()*100))
+            print("\nEpoch {:d}, Validation Loss: {:.3f}, Validation Accuracy: {:.3f}\n".format(epoch, test_loss.result(), test_accuracy.result()))
+
+            if test_accuracy.result() > max_t_acc:
+                max_t_acc = test_accuracy.result()
+                ep_wait = 0
+            else:
+                ep_wait += 1
+                if ep_wait <= patience:
+                    break
 
         # Reset metrics every epoch
         train_loss.reset_states()

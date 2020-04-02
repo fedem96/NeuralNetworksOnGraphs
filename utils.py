@@ -103,7 +103,6 @@ def read_p(dataset):
             keys_to_idx[node[0]] = len(keys)
             keys.append(node[0])
 
-
             for i in range(2, len(node)-1):
                 k, v = node[i].split('=')
                 node_feature[keys_to_word_idx[k]] = v
@@ -135,9 +134,8 @@ def one_hot_enc(n_classes, labels):
     return np.array(o_h_labels)
 
 
-def permute(features, neighbors, labels, o_h_labels, keys, seed=None):
+def permute(features, neighbors, labels, o_h_labels, keys):
 
-    np.random.seed(seed=seed)
     permutation = np.random.permutation(len(keys))
     inv_permutation = np.argsort(permutation)
     labels = labels[permutation]
@@ -193,13 +191,15 @@ def split(dataset, labels):
 
     return mask_train, mask_val, mask_test
 
-def adjacency_matrix(neighbors):
+def adjacency_matrix(neighbors, self_loops=False):
     num_nodes = len(neighbors)
     row_ind = []
     col_ind = []
     values = []
 
     for n, adjacency_list in enumerate(neighbors):
+        if self_loops:
+            row_ind.append(n); col_ind.append(n); values.append(1)
         for edge in adjacency_list:
             neighbor = edge[0]
             weight = edge[1]
@@ -240,11 +240,11 @@ def renormalization_matrix(A):
 
 def main():
     dataset = "pubmed"
-    seed = 1234
+    np.random.seed(0)
 
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
     features = normalize_features(features)
-    permute(features, neighbors, labels, o_h_labels, keys, seed)
+    permute(features, neighbors, labels, o_h_labels, keys)
     train_idx, val_idx, test_idx = split(dataset, labels)
     
 

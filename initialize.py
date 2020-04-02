@@ -1,11 +1,11 @@
-import os 
-import sys
+import tensorflow as tf
+import numpy as np
+import sys, os
 
 sys.path.insert(1, os.path.dirname(os.path.abspath('__file__')))
 
 from Planetoid.set_up_planetoid import set_up_planetoid
 from GAT.set_up_gat import set_up_gat
-
 
 if __name__ == '__main__':
 
@@ -15,15 +15,15 @@ if __name__ == '__main__':
     epochs = 10
     val_period = 5                  # each epoch validation
     log = 1                         # every two epochs print train loss and acc
-    pre_train_iters = 100           # graph context pretrain iterations
+
+    data_seed = 0
+    net_seed = 0
+    tf.random.set_seed(net_seed)
+    np.random.seed(data_seed)
 
     if model=="planetoid":
-
         modality = "I"          # can be T (transductive) or I (inductive)    
-        embedding_size = 50   
-        seed = 1234
-        args = {'r1': 5/6, 'r2': 5/6, 'q':10 , 'd':3, 'n1':200, 'n2':200, 't1':20, 't2':20}
-        set_up_planetoid(embedding_size, dataset, seed, modality, epochs, val_period, log, pre_train_iters, args)
+        set_up_planetoid(dataset, modality, epochs, val_period, log)
     
     elif model=='cheb':
         ...
@@ -32,4 +32,4 @@ if __name__ == '__main__':
         ...
 
     elif model=='gat':
-        set_up_gat()
+        set_up_gat(dataset, epochs, val_period, log)
