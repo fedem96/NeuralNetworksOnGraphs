@@ -1,29 +1,67 @@
-initialize:
+- model: ChebNet|chebnet
+  description: Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering (Deferrard et al, 2016)
 
-  main: initialize
-  
-  sourcecode: 
-    - '*.py'
-  flags-dest: globals
-  flags:
-    models:
-      default: "planetoid"
-      choices: ["planetoid", "cheb" ,"gcn", "gat"]
-    dataset: 
-      default: "cora"
-      choices: ["cora", "pubmed", "citeseer"]
-    epochs:
-      default: 10
-    val_period:
-      default: 5
-    log:
-      default: 1
-    pre_train_iters:
-      default: 100
-    modality: 
-      default: "I"
-      choices: ["T", "I"]
+  operations:
+
+    train:
+      description: 
+      main: ChebNet/train
+      sourcecode: '*.py'
+      flags-dest: args
+
+    train-citeseer:
+      description: Train ChebNet on citeseer dataset with hyperparameters reported in GCN paper
+      main: ChebNet/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: citeseer
+        K:
+          default: 4
+
+    train-cora:
+      description: Train ChebNet on cora dataset with hyperparameters reported in GCN paper
+      main: ChebNet/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: cora
+        K:
+          default: 3
+
+    train-pubmed:
+      description: Train ChebNet on pubmed dataset with hyperparameters reported in GCN paper
+      main: ChebNet/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: pubmed
+        K:
+          default: 4
+
+    test:
+      description: 
+      main: ChebNet/test
+      sourcecode: '*.py'
+      flags-dest: args
 
 
+- model: GCN|gcn
+  description: Semi-Supervised Classification with Graph Convolutional Netowrks (Kipf and welling, 2017)
 
-    
+  operations:
+
+    train:
+      description: 
+      main: GCN/train
+      sourcecode: '*.py'
+      flags-dest: args
+
+    test:
+      description: 
+      main: GCN/test
+      sourcecode: '*.py'
+      flags-dest: args

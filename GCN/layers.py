@@ -1,9 +1,10 @@
+import importlib
+
+import numpy as np
 import tensorflow as tf
 
-import sys, os
-sys.path.insert(1, os.path.dirname(os.path.abspath('__file__')))
-
-from utils import *
+# utils = importlib.import_module('..utils', '.')
+# from utils import *
 
 class GraphConvolution(tf.keras.layers.Layer):
 
@@ -35,6 +36,5 @@ class GraphConvolution(tf.keras.layers.Layer):
     def call(self, x):
         x = tf.cast(x, self._dtype)
         mx = tf.sparse.sparse_dense_matmul(self.renormalized_matrix, x) # shapes: (n, n)   *   (n, fin)  -> (n, fin)
-        #mx = csr_matrix_to_sparse_tensor(mx)
-        o = tf.matmul(mx, self.theta)                             # shapes: (n, fin) * (fin, fout) -> (n, fout)
+        o = tf.matmul(mx, self.theta)                                   # shapes: (n, fin) * (fin, fout) -> (n, fout)
         return o if self.activation is None else self.activation(o)
