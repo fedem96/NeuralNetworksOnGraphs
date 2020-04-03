@@ -1,3 +1,66 @@
+########## Planetoid ##########
+- model: Planetoid|planetoid
+  description: Revisiting Semi-Supervised Learning with Graph Embeddings (Yang et al., 2016)
+  operations:
+
+    train:
+      description: 
+      main: Planetoid/train
+      sourcecode: '*.py'
+      flags-dest: args
+
+    train-citeseer:
+      description: Train Planetoid on citeseer dataset with hyperparameters reported in the paper
+      main: Planetoid/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: citeseer
+        modality: 
+          default: "I"
+          choices: ["T", "I"]
+
+    train-cora:
+      description: Train Planetoid on cora dataset with hyperparameters reported in the paper
+      main: Planetoid/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: cora
+        modality: 
+          default: "I"
+          choices: ["T", "I"]
+
+    train-pubmed:
+      description: Train Planetoid on pubmed dataset with hyperparameters reported in the paper
+      main: Planetoid/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: pubmed
+        modality: 
+          default: "I"
+          choices: ["T", "I"]
+        learning-rate-supervised: 
+          default: 0.01
+        pretrain-batch: 
+          default: 70
+        unsupervised-batch: 
+          default: 0
+        unsupervised-batch-size: 
+          default: 200
+
+    test:
+      description: 
+      main: Planetoid/test
+      sourcecode: '*.py'
+      flags-dest: args
+
+
+########## ChebNet ##########
 - model: ChebNet|chebnet
   description: Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering (Deferrard et al, 2016)
 
@@ -49,6 +112,7 @@
       flags-dest: args
 
 
+########## GCN ##########
 - model: GCN|gcn
   description: Semi-Supervised Classification with Graph Convolutional Netowrks (Kipf and welling, 2017)
 
@@ -65,3 +129,57 @@
       main: GCN/test
       sourcecode: '*.py'
       flags-dest: args
+
+
+########## GAT ##########
+- model: GAT|gat
+  description: Graph Attention Networks ( Velickovic et al., 2018)
+
+  operations:
+
+    train:
+      description: 
+      main: GAT/train
+      sourcecode: '*.py'
+      flags-dest: args
+
+    train-citeseer:
+      description: Train GAT on citeseer dataset with hyperparameters reported in the paper
+      main: GAT/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: citeseer
+
+    train-cora:
+      description: Train GAT on cora dataset with hyperparameters reported in the paper
+      main: GAT/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: cora
+
+    train-pubmed:
+      description: Train GAT on pubmed dataset with hyperparameters reported in the paper
+      main: GAT/train
+      sourcecode: '*.py'
+      flags-dest: args
+      flags:
+        dataset:
+          default: pubmed
+        nheads2:
+          default: 8
+        learning-rate:
+          default: 0.01
+        l2-weight:
+          default: 0.001
+        
+    
+    test:
+      description: 
+      main: GAT/test
+      sourcecode: '*.py'
+      flags-dest: args
+
