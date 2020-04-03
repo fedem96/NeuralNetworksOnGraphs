@@ -1,70 +1,111 @@
-import tensorflow as tf
+import argparse
 import numpy as np
-import sys, os
-import datetime
+
+import tensorflow as tf
+from add_parent_path import add_parent_path
+
+from models import Planetoid_I, Planetoid_T
+
+with add_parent_path():
+    from metrics import UnlabeledLoss
+    from utils import *
 
 
-def train(model, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, test_accuracy, train_loss, train_loss_u, test_loss,
-    T1, T2, val_period, log):
+def main(modality, dataset_name, 
+        embedding_dim, epochs, pretrain_batch,
+        supervised_batch, unsupervised_batch, supervised_batch_size,
+        unsupervised_batch_size, learning_rate_supervised, 
+        learning_rate_unsupervised, random_walk_length, 
+        window_size, neg_sample, sample_context_rate,
+        data_seed, net_seed):
+    
+    print("Planetoid-{:s}!".format(modality))
+    
+    # reproducibility
+    np.random.seed(data_seed)
+    tf.random.set_seed(net_seed)
 
-    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    train_log_dir = 'logs/Planetoid/' + current_time + '/train'
-    val_log_dir = 'logs/Planetoid/' + current_time + '/val'
-    train_summary_writer = tf.summary.create_file_writer(train_log_dir)
-    val_summary_writer = tf.summary.create_file_writer(val_log_dir)
+    print("reading dataset")
+    features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
+    num_classes = len(set(labels))
 
-    max_t_acc = 0
-    patience = 20
-   
-    for epoch in range(1, epochs+1):
+    print("shuffling dataset")
+    features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
+    
+    print("obtaining masks")
+    mask_train, mask_val, mask_test = split(dataset_name, labels)
 
-        print("Epoch: {:d} ==> ".format(epoch), end=' ')
+    # Define model, loss, metrics and optimizers
+    if modality == "I":
+        model = Planetoid_I(neighbors, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
+    elif modality == "T":
+        model = Planetoid_T(neighbors, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
 
-        model.train_step(L_s, L_u, optimizer_u, optimizer_s, train_accuracy, train_loss, train_loss_u, T1, T2)
+    L_s = tf.keras.losses.CategoricalCrossentropy()
+    L_u = UnlabeledLoss(unsupervised_batch_size)
 
-        with train_summary_writer.as_default():
-            tf.summary.scalar('loss_s', train_loss.result(), step=epoch)
-            tf.summary.scalar('loss_u', train_loss_u.result(), step=epoch)
-            tf.summary.scalar('accuracy', train_accuracy.result(), step=epoch)
+    train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="train_acc")
+    test_accuracy = tf.keras.metrics.CategoricalAccuracy(name="test_acc")
+    train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
+    train_loss_u = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
+    test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
 
-        if epoch % log == 0:
-            print("Train Loss: s {:.3f} u {:.3f}, Train Accuracy: {:.3f}".format(train_loss.result(), train_loss_u.result(), train_accuracy.result()))
+    optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)       # , momentum=0.99)
+    optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)       # , momentum=0.99)
 
-        if epoch % val_period == 0:
-            
-            model.test_step(L_s, test_accuracy, test_loss, mode="val")
+    print("pre-train model")
 
-            with val_summary_writer.as_default():
-                tf.summary.scalar('loss', test_loss.result(), step=epoch)
-                tf.summary.scalar('accuracy', test_accuracy.result(), step=epoch)
-            
-            print("\nEpoch {:d}, Validation Loss: {:.3f}, Validation Accuracy: {:.3f}\n".format(epoch, test_loss.result(), test_accuracy.result()))
+    # Pretrain iterations on graph context
+    model.pretrain_step(features, mask_test, L_u, optimizer_u, train_loss_u, pretrain_batch, unsupervised_batch_size)
 
-            if test_accuracy.result() > max_t_acc:
-                max_t_acc = test_accuracy.result()
-                ep_wait = 0
-            else:
-                ep_wait += 1
-                if ep_wait <= patience:
-                    break
+    print("begin training")
+    model.train(features, o_h_labels, mask_train, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, test_accuracy, 
+        train_loss, train_loss_u, test_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size)
 
-        # Reset metrics every epoch
-        train_loss.reset_states()
-        train_loss_u.reset_states()
-        test_loss.reset_states()
-        train_accuracy.reset_states()
-        test_accuracy.reset_states()
+    # TODO: test
 
 
-def test(model, L_s, test_accuracy, test_loss):
+if __name__ == '__main__':
 
-    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    test_log_dir = 'logs/Planetoid/' + current_time + '/test'
-    test_summary_writer = tf.summary.create_file_writer(test_log_dir)
+    parser = argparse.ArgumentParser(description='Train Planetoid')
 
-    model.test_step(L_s, test_accuracy, test_loss, mode="test")
+    # modality can be I inductive T transductive
+    parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
+    
+    # dataset choice
+    parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])
+    
+    # network hyperparameters
+    parser.add_argument("-emb", "--embedding-dim", help="number of training epochs", default=50, type=int)
 
-    print("Test Loss: {:.3f}, Test Accuracy: {:.2f}%".format(test_loss.result(), test_accuracy.result()*100))
+    # optimization parameters
+    parser.add_argument("-e", "--epochs", help="number of training epochs", default=10, type=int)
+    parser.add_argument("-it", "--pretrain-batch", help="number of pretraining batches", default=400, type=int)
+    parser.add_argument("-t1", "--supervised-batch", help="number of training epochs", default=1.0, type=float)
+    parser.add_argument("-t2", "--unsupervised-batch", help="number of training epochs", default=0.1, type=float)
+    parser.add_argument("-n1", "--supervised-batch-size", help="number of training epochs", default=200, type=int)
+    parser.add_argument("-n2", "--unsupervised-batch-size", help="number of training epochs", default=20, type=int)    
+    parser.add_argument("-lrs", "--learning-rate-supervised", help="supervised learning rate", default=1e-1, type=float)
+    parser.add_argument("-lru", "--learning-rate-unsupervised", help="unsupervised learning rate", default=1e-3, type=float)
+    
+    # sampling algorithm parameters
+    parser.add_argument("-q", "--random-walk-length", help="number of training epochs", default=10, type=int)
+    parser.add_argument("-w", "--window-size", help="number of training epochs", default=3, type=int)
+    parser.add_argument("-r1", "--neg-sample-rate", help="number of training epochs", default=5/6, type=float)
+    parser.add_argument("-r2", "--sample-context-rate", help="number of training epochs", default=5/6, type=float)
 
-    return
+    # reproducibility
+    parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
+    parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
+
+    args = parser.parse_args()
+    
+    main(args.modality, args.dataset, 
+        args.embedding_dim, args.epochs, args.pretrain_batch,
+        args.supervised_batch, args.unsupervised_batch, args.supervised_batch_size,
+        args.unsupervised_batch_size, args.learning_rate_supervised, 
+        args.learning_rate_unsupervised, args.random_walk_length, 
+        args.window_size, args.neg_sample_rate, args.sample_context_rate,
+        args.data_seed, args.net_seed)
+
 

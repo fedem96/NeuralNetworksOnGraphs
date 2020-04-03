@@ -5,13 +5,13 @@ from time import time
 
 class Attention_layer(tf.keras.layers.Layer):
 
-    def __init__(self, graph, output_size, activation, nheads, reduction, **kwargs):
+    def __init__(self, graph, output_size, activation, nheads, coefs_drop_rate, reduction, **kwargs):
         # if nheads==1 Single head attention layer, otherwise Multi head attention layer
         super(Attention_layer, self).__init__(**kwargs)
         self.nheads = nheads
         self.graph = graph
         self.output_size = output_size
-        self.drop_prob = 0.6  # prob for dropout before
+        self.coefs_drop_rate = coefs_drop_rate
         self.reduction = reduction
         self.non_linearity = tf.keras.activations.get(activation)
 
@@ -50,7 +50,8 @@ class Attention_layer(tf.keras.layers.Layer):
             alphas = tf.sparse.softmax(E)
 
             # Dropout on attention coefficients
-            alphas = tf.SparseTensor(E.indices, tf.nn.dropout(E.values,1.0*self.drop_prob), E.dense_shape)
+            if self.coefs_drop_rate != 0.0:
+                alphas = tf.SparseTensor(E.indices, tf.nn.dropout(E.values,0.4), E.dense_shape)
 
             h_k_out = tf.sparse.sparse_dense_matmul(alphas, t_nodes[k])
 
