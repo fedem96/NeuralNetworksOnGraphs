@@ -34,6 +34,7 @@ class Attention_layer(tf.keras.layers.Layer):
         Ws = self.Ws
         nheads = self.nheads
         out_size = self.output_size
+        coefs_dr = self.coefs_drop_rate
 
         t_nodes = tf.matmul(inputs, tf.transpose(Ws, [0,2,1])) 
         Al = tf.matmul(t_nodes, As[:, :out_size, :])
@@ -51,7 +52,7 @@ class Attention_layer(tf.keras.layers.Layer):
 
             # Dropout on attention coefficients
             if self.coefs_drop_rate != 0.0:
-                alphas = tf.SparseTensor(E.indices, tf.nn.dropout(E.values,0.4), E.dense_shape)
+                alphas = tf.SparseTensor(E.indices, tf.nn.dropout(E.values,coefs_dr), E.dense_shape)
 
             h_k_out = tf.sparse.sparse_dense_matmul(alphas, t_nodes[k])
 

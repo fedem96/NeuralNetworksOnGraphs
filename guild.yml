@@ -169,8 +169,8 @@
       flags:
         dataset:
           default: pubmed
-        nheads2:
-          default: 8
+        nheads:
+          default: 8,8
         learning-rate:
           default: 0.01
         l2-weight:
