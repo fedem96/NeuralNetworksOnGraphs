@@ -23,7 +23,6 @@ class UnlabeledLoss(tf.keras.losses.Loss):
         s = tf.reduce_sum(y_pred, axis=1)
         dot_prod = tf.math.multiply(s, y_true)
         # Credits to https://www.tensorflow.org/api_docs/python/tf/math/log_sigmoid
-        # loss = -1/self.N2 * tf.reduce_sum(tf.math.log_sigmoid(dot_prod))
         loss = tf.reduce_mean(tf.nn.softplus(-dot_prod))
         return loss
 

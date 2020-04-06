@@ -73,14 +73,12 @@ class Planetoid(tf.keras.Model):
         return int(it) 
 
     def train(self, features, labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, 
-            train_accuracy, val_accuracy, train_loss, train_loss_u, val_loss, T1, T2, N1, N2, log_path=None):
+            train_accuracy, val_accuracy, train_loss, train_loss_u, val_loss, T1, T2, N1, N2, patience, checkpoint_path=None):
 
         max_t_acc = 0
-        patience = 20
-        if not log_path==None:
-            ckpt_name = 'Planetoid_ckpts/cp-{epoch:03d}-{v:03f}.ckpt'
-            checkpoint_path = os.path.join(log_path, ckpt_name)
-
+        if not checkpoint_path==None:
+            ckpt_name = 'Planetoid_ckpts/cp.ckpt'
+            checkpoint_path = os.path.join(checkpoint_path, ckpt_name)
 
         for epoch in range(1, epochs+1):
 
@@ -97,11 +95,13 @@ class Planetoid(tf.keras.Model):
 
             if val_accuracy.result() > max_t_acc:
                 max_t_acc = val_accuracy.result()
-                if not log_path==None: self.save_weights(checkpoint_path.format(epoch=epoch, v=max_t_acc))
+                if not checkpoint_path==None: self.save_weights(checkpoint_path.format(epoch=epoch, v=max_t_acc))
                 ep_wait = 0
             else:
                 ep_wait += 1
-                if ep_wait >= patience: break
+                if ep_wait >= patience: 
+                    print("Early stop at epoch {:d}, best val acc {:03f}".format(epoch, max_t_acc))
+                    break
 
             # Reset metrics every epoch
             train_loss.reset_states()

@@ -15,9 +15,10 @@ def main(modality, dataset_name,
         embedding_dim, epochs, pretrain_batch,
         supervised_batch, unsupervised_batch, supervised_batch_size,
         unsupervised_batch_size, learning_rate_supervised, 
-        learning_rate_unsupervised, random_walk_length, 
-        window_size, neg_sample, sample_context_rate,
-        data_seed, net_seed, log_path):
+        learning_rate_unsupervised, patience,
+        random_walk_length, window_size, 
+        neg_sample, sample_context_rate,
+        data_seed, net_seed, checkpoint_path):
     
     print("Planetoid-{:s}!".format(modality))
     
@@ -44,7 +45,7 @@ def main(modality, dataset_name,
     elif modality == "T":
         model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
 
-    L_s = tf.keras.losses.CategoricalCrossentropy()
+    L_s = tf.keras.losses.CategoricalCrossentropy("train_loss_s")
     L_u = UnlabeledLoss(unsupervised_batch_size)
 
     train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="train_acc")
@@ -62,10 +63,7 @@ def main(modality, dataset_name,
 
     print("begin training")
     model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, 
-            train_loss, train_loss_u, val_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, log_path)
-
-    # TODO: test
-
+        train_loss, train_loss_u, val_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path)
 
 if __name__ == '__main__':
 
@@ -89,6 +87,7 @@ if __name__ == '__main__':
     parser.add_argument("-n2", "--unsupervised-batch-size", help="unsupervised mini-batch size", default=20, type=int)    
     parser.add_argument("-lrs", "--learning-rate-supervised", help="supervised learning rate", default=1e-1, type=float)
     parser.add_argument("-lru", "--learning-rate-unsupervised", help="unsupervised learning rate", default=1e-3, type=float)
+    parser.add_argument("-p", "--patience", help="patience for early stop", default=100, type=int)
     
     # sampling algorithm (Alg.1) hyper-parameters
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
@@ -101,17 +100,17 @@ if __name__ == '__main__':
     parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
     # save model weights
-    parser.add_argument("-lp", "--log-path", help="path for model checkpoints", default=None)
+    parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
 
     args = parser.parse_args()
-    print(args.log_path)
     
     main(args.modality, args.dataset, 
         args.embedding_dim, args.epochs, args.pretrain_batch,
         args.supervised_batch, args.unsupervised_batch, args.supervised_batch_size,
         args.unsupervised_batch_size, args.learning_rate_supervised, 
-        args.learning_rate_unsupervised, args.random_walk_length, 
-        args.window_size, args.neg_sample_rate, args.sample_context_rate,
-        args.data_seed, args.net_seed, args.log_path)
+        args.learning_rate_unsupervised, args.patience,
+        args.random_walk_length, args.window_size, 
+        args.neg_sample_rate, args.sample_context_rate,
+        args.data_seed, args.net_seed, args.checkpoint_path)
 
 

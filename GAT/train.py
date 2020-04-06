@@ -14,7 +14,7 @@ with add_parent_path():
 def main(dataset_name, 
         nheads, hidden_units, feat_drop_rate, coefs_drop_rate,
         epochs, learning_rate, l2_weight, patience, 
-        data_seed, net_seed):
+        data_seed, net_seed, checkpoint_path):
 
     # reproducibility
     np.random.seed(data_seed)
@@ -46,11 +46,17 @@ def main(dataset_name,
 
 
     print("begin training")
-    tb = TensorBoard(log_dir='logs') #TODO: change dir
-    es_l = EarlyStopping(monitor='val_loss', min_delta=0, patience=patience, verbose=1, mode='min') 
-    es_a = EarlyStopping(monitor='val_masked_accuracy', min_delta=0, patience=patience, verbose=1, mode='max') 
-    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es_l, es_a])
-    
+    callbacks = []
+    if not checkpoint_path == None:
+        checkpoint_path += 'GAT_ckpts/cp.ckpt'
+        callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1))
+    callbacks.append(TensorBoard(log_dir='logs')) #TODO: change dir
+    callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=patience, verbose=1, mode='min') )
+    callbacks.append(EarlyStopping(monitor='val_masked_accuracy', min_delta=0, patience=patience, verbose=1, mode='max') )
+
+    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks)
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Train GAT')
@@ -74,11 +80,13 @@ if __name__ == '__main__':
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
     parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
-    args = parser.parse_args()
+    # save model weights
+    parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
 
+    args = parser.parse_args()
     nheads = [int(item) for item in args.nheads.split(',')]
     
     main(args.dataset, 
         nheads, args.hidden_units, args.feat_drop_rate, args.coefs_drop_rate,
         args.epochs, args.learning_rate, args.l2_weight, args.patience, 
-        args.data_seed, args.net_seed)
+        args.data_seed, args.net_seed, args.checkpoint_path)
