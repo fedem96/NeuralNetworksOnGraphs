@@ -52,9 +52,9 @@ class Attention_layer(tf.keras.layers.Layer):
 
             # Dropout on attention coefficients
             if self.coefs_drop_rate != 0.0:
-                alphas = tf.SparseTensor(E.indices, tf.nn.dropout(E.values,coefs_dr), E.dense_shape)
-
-            h_k_out = tf.sparse.sparse_dense_matmul(alphas, t_nodes[k])
+                alphas = tf.SparseTensor(alphas.indices, tf.nn.dropout(alphas.values,coefs_dr), alphas.dense_shape)
+        
+            h_k_out = tf.sparse.sparse_dense_matmul(alphas, tf.nn.dropout(t_nodes[k],0.4))
 
             if k == 0:
                 out = tf.expand_dims(h_k_out, 0)
