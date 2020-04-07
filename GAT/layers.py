@@ -35,8 +35,8 @@ class Attention_layer(tf.keras.layers.Layer):
         feat_dr = self.feat_drop_rate if training else 0.0
 
         t_nodes = tf.matmul(inputs, tf.transpose(self.Ws, [0,2,1])) 
-        Al = tf.matmul(t_nodes, self.As[:, :self.out_size, :])
-        Ar = tf.matmul(t_nodes, self.As[:, self.out_size:, :])
+        Al = tf.matmul(t_nodes, self.As[:, :self.output_size, :])
+        Ar = tf.matmul(t_nodes, self.As[:, self.output_size:, :])
 
         for k in range(self.nheads):
 
