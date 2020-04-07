@@ -8,13 +8,13 @@ from add_parent_path import add_parent_path
 from models import GAT
 
 with add_parent_path():
-    from metrics import RegularizedLoss
+    from metrics import masked_accuracy, masked_loss
     from utils import *
 
 def main(dataset_name, 
-        nheads1, nheads2, hidden_units, feat_drop_rate, coefs_drop_rate,
+        nheads, hidden_units, feat_drop_rate, coefs_drop_rate,
         epochs, learning_rate, l2_weight, patience, 
-        data_seed, net_seed):
+        data_seed, net_seed, checkpoint_path):
 
     # reproducibility
     np.random.seed(data_seed)
@@ -39,14 +39,24 @@ def main(dataset_name,
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     print("defining model")
-    model = GAT(graph, num_classes, hidden_units, [nheads1, nheads2], feat_drop_rate, coefs_drop_rate, l2_weight, optimizer)
+    model = GAT(graph, num_classes, hidden_units, nheads, feat_drop_rate, coefs_drop_rate)
+
+    model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_pred-y_true), 
+                    optimizer=optimizer, metrics=[masked_accuracy])
+
 
     print("begin training")
-    tb = TensorBoard(log_dir='logs') #TODO: change dir
-    es_l = EarlyStopping(monitor='val_loss', min_delta=0, patience=patience, verbose=1, mode='min') 
-    es_a = EarlyStopping(monitor='val_masked_accuracy', min_delta=0, patience=patience, verbose=1, mode='max') 
-    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es_l, es_a])
-    
+    callbacks = []
+    if not checkpoint_path == None:
+        checkpoint_path += 'GAT_ckpts/cp.ckpt'
+        callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1))
+    callbacks.append(TensorBoard(log_dir='logs')) #TODO: change dir
+    callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=patience, verbose=1, mode='min') )
+    callbacks.append(EarlyStopping(monitor='val_masked_accuracy', min_delta=0, patience=patience, verbose=1, mode='max') )
+
+    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks)
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Train GAT')
@@ -55,8 +65,7 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])
     
     # network hyperparameters
-    parser.add_argument("-nh1", "--nheads1", help="number of heads for the first attention layer", default=8, type=int)
-    parser.add_argument("-nh2", "--nheads2", help="number of heads for the second attention layer", default=1, type=int)
+    parser.add_argument('-nh', '--nheads', help='heads number per layer (the len of the list represent the model layers number)', default='8,1')
     parser.add_argument("-hu", "--hidden-units", help="number of Graph Convolutional filters in the first layer", default=8, type=int)
     parser.add_argument("-fd", "--feat-drop-rate", help="dropout rate for model dropout layers (fraction of the input units to drop)", default=0.4, type=float)
     parser.add_argument("-cd", "--coefs-drop-rate", help="dropout rate for attention coefficients (fraction of the input units to drop)", default=0.4, type=float)
@@ -71,9 +80,13 @@ if __name__ == '__main__':
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
     parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
+    # save model weights
+    parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
+
     args = parser.parse_args()
+    nheads = [int(item) for item in args.nheads.split(',')]
     
     main(args.dataset, 
-        args.nheads1, args.nheads2, args.hidden_units, args.feat_drop_rate, args.coefs_drop_rate,
+        nheads, args.hidden_units, args.feat_drop_rate, args.coefs_drop_rate,
         args.epochs, args.learning_rate, args.l2_weight, args.patience, 
-        args.data_seed, args.net_seed)
+        args.data_seed, args.net_seed, args.checkpoint_path)

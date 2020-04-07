@@ -1,6 +1,7 @@
-import tensorflow as tf
+from math import ceil
 import numpy as np
 import scipy
+import tensorflow as tf
 
 class Chebychev(tf.keras.layers.Layer):
 
@@ -54,11 +55,22 @@ class Chebychev(tf.keras.layers.Layer):
     def build(self, input_shape):
         self.fin = input_shape[1]
         self.theta = self.add_weight(shape=[self.K, self.fin, self.fout], initializer='glorot_uniform', dtype=self._dtype)
+        self.bias = self.add_weight(shape=[self.fout], initializer='zeros', dtype=self._dtype)
+
+        # if using GPU, it's impossible to do sparse_dense_matmul(A, B) when: num_non_zero(A) * B.shape[1] > 2**31
+        self.slice_required = "GPU" in self.weights[0].device and len(self.polynomials.values) * self.fin > 2**31
+        self.slice_size = 2**31 // len(self.polynomials.values)
+        self.num_slices = ceil(self.fin / self.slice_size)
 
     def call(self, x):
         x = tf.cast(x, self._dtype)
-        tx = tf.sparse.sparse_dense_matmul(self.polynomials, x) # shapes: (K*n, n)    *    (n, fin)    -> (K*n, fin)
-        tx = tf.reshape(tx, [self.K, self.n, self.fin])         # shapes: (K*n, fin)                   -> (K, n, fin)
-        o = tf.matmul(tf.cast(tx, self._dtype), self.theta)     # shapes: (K, n, fin) * (K, fin, fout) -> (K, n, fout)
-        o = tf.reduce_sum(o, 0)                                 # shapes: (K, n, fout)                 -> (n, fout)
+
+        if self.slice_required: # if using GPU, x.shape[1] can't be too large
+            tx = tf.concat([tf.sparse.sparse_dense_matmul(self.polynomials, x[:, s*self.slice_size: min(self.fin, (s+1)*self.slice_size)]) for s in range(self.num_slices)], axis=1)
+        else:  # no slice required
+            tx = tf.sparse.sparse_dense_matmul(self.polynomials, x) # shapes: (K*n, n)    *    (n, fin)    -> (K*n, fin)
+        tx = tf.reshape(tx, [self.K, self.n, self.fin])             # shapes: (K*n, fin)                   -> (K, n, fin)
+        o = tf.matmul(tf.cast(tx, self._dtype), self.theta)         # shapes: (K, n, fin) * (K, fin, fout) -> (K, n, fout)
+        o = tf.reduce_sum(o, 0)                                     # shapes: (K, n, fout)                 -> (n, fout)
+        o = tf.nn.bias_add(o, self.bias)
         return o if self.activation is None else self.activation(o)

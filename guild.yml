@@ -9,42 +9,30 @@
       sourcecode: '*.py'
       flags-dest: args
 
-    train-citeseer:
-      description: Train Planetoid on citeseer dataset with hyperparameters reported in the paper
+    train-i:
+      description: Train Planetoid-I with hyperparameters reported in the paper
       main: Planetoid/train
       sourcecode: '*.py'
       flags-dest: args
       flags:
         dataset:
           default: citeseer
+          choices: ["citeseer", "cora", "pubmed"]
         modality: 
           default: "I"
-          choices: ["T", "I"]
 
-    train-cora:
-      description: Train Planetoid on cora dataset with hyperparameters reported in the paper
+    train-t:
+      description: Train Planetoid-T with hyperparameters reported in the paper
       main: Planetoid/train
       sourcecode: '*.py'
       flags-dest: args
       flags:
         dataset:
-          default: cora
+          default: citeseer
+          choices: ["citeseer", "cora", "pubmed"]
         modality: 
-          default: "I"
-          choices: ["T", "I"]
-
-    train-pubmed:
-      description: Train Planetoid on pubmed dataset with hyperparameters reported in the paper
-      main: Planetoid/train
-      sourcecode: '*.py'
-      flags-dest: args
-      flags:
-        dataset:
-          default: pubmed
-        modality: 
-          default: "I"
-          choices: ["T", "I"]
-        learning-rate-supervised: 
+          default: "T"
+        learning-rate-unsupervised: 
           default: 0.01
         pretrain-batch: 
           default: 70
@@ -54,10 +42,20 @@
           default: 200
 
     test:
-      description: 
+      description: Test Planetoid; insert the checkpoint to the model (checkpoint-path)
       main: Planetoid/test
       sourcecode: '*.py'
       flags-dest: args
+      flags:
+        dataset:
+          default: citeseer
+          choices: ["citeseer", "cora", "pubmed"]
+        modality: 
+          default: "I"
+          choices: ["I", "T"]
+        checkpoint-path:
+          required: True
+   
 
 
 ########## ChebNet ##########
@@ -169,17 +167,18 @@
       flags:
         dataset:
           default: pubmed
-        nheads2:
-          default: 8
+        nheads:
+          default: 8,8
         learning-rate:
           default: 0.01
         l2-weight:
-          default: 0.001
-        
+          default: 0.001        
     
     test:
       description: 
       main: GAT/test
       sourcecode: '*.py'
       flags-dest: args
-
+      flags:
+        checkpoint-path:
+          required: True

@@ -1,35 +1,29 @@
 import tensorflow as tf
 import numpy as np
-from add_parent_path import add_parent_path
 
 from layers import Attention_layer
 
-with add_parent_path():
-    from metrics import masked_accuracy, masked_loss
-
-
 class GAT(tf.keras.Model):
 
-    def __init__(self, graph, nlabels, nhidden, nheads, feat_drop_rate, 
-                coefs_drop_rate, l2_weight, optimizer):
+    def __init__(self, graph, nlabels, nhidden, nheads, feat_drop_rate, coefs_drop_rate):
         super().__init__()
         
-        self.att1 = Attention_layer(graph, nhidden, 'elu', nheads[0], coefs_drop_rate, reduction=False)
-        self.att2 = Attention_layer(graph, nlabels, 'softmax', nheads[1], coefs_drop_rate, reduction=True)
+        self.atts = [Attention_layer(graph, nhidden, 'elu', heads, feat_drop_rate, coefs_drop_rate, reduction=False)
+                    for heads in nheads[:-1]]
+        self.att_out = Attention_layer(graph, nlabels, 'softmax', nheads[-1], feat_drop_rate, coefs_drop_rate, reduction=True)
 
         self.feat_drop_rate = feat_drop_rate
 
-        self.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_pred-y_true), 
-                    optimizer=optimizer, metrics=[masked_accuracy])
+        
+    def call(self, x, training=True):
+        # Input x has shape (n_nodes, features)
+        feat_dr = self.feat_drop_rate if training else 0.0
 
-    def call(self, inputs, training=True):
+        for att in self.atts:
+            drop_inp = tf.nn.dropout(x, feat_dr)
+            x = att(drop_inp, training)
 
-        drop_rate = self.feat_drop_rate if training else 0.0
-
-        drop_inp = tf.nn.dropout(inputs, drop_rate)
-        h_features = self.att1(drop_inp)
-
-        drop_h = tf.nn.dropout(h_features, drop_rate)
-        out = self.att2(drop_h)
+        drop_h = tf.nn.dropout(x, feat_dr)
+        out = self.att_out(drop_h, training)
 
         return tf.squeeze(out)
