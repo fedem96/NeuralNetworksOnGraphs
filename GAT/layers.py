@@ -11,7 +11,7 @@ class Attention_layer(tf.keras.layers.Layer):
         self.nheads = nheads
         self.graph = graph
         self.output_size = output_size
-        self.coefs_drop_rate = coefs_drop_rate
+        self.coefs_drop_rate = coefs_drop_rate  
         self.feat_drop_rate = feat_drop_rate
         self.reduction = reduction
         self.non_linearity = tf.keras.activations.get(activation)
@@ -22,8 +22,15 @@ class Attention_layer(tf.keras.layers.Layer):
         self.Ws = self.add_weight(shape=[self.nheads, self.output_size, input_shape[1]], 
                                 initializer='glorot_uniform', name='Ws', trainable=True)
 
+        self.Ws_bias = self.add_weight(shape=[self.nheads, self.output_size], initializer='zeros', 
+                                    trainable = True, dtype=self._dtype)
+
+
         self.As = self.add_weight(shape=[self.nheads, 2*self.output_size, 1],
                                 initializer='glorot_uniform', name='As', trainable = True)
+        
+        self.As_bias = self.add_weight(shape=[self.nheads, 2], initializer='zeros',  # 8 x 1
+                                    trainable = True, dtype=self._dtype)
 
         super().build(input_shape)
 
@@ -39,9 +46,9 @@ class Attention_layer(tf.keras.layers.Layer):
         Ar = tf.matmul(t_nodes, self.As[:, self.output_size:, :])
 
         for k in range(self.nheads):
-
-            row_partial = graph * Al[k]
-            col_partial = graph * Ar[k]
+            
+            row_partial = graph * (Al[k]+self.As_bias[k,0]) 
+            col_partial = graph * (Ar[k]+self.As_bias[k,1]) 
             E = tf.sparse.add(row_partial, tf.sparse.transpose(col_partial))
             # Sparse LReLU
             lrelu = tf.SparseTensor(E.indices, tf.nn.leaky_relu(E.values), E.dense_shape)
@@ -54,6 +61,9 @@ class Attention_layer(tf.keras.layers.Layer):
             # Dropout on input features
             h_k_out = tf.sparse.sparse_dense_matmul(alphas, tf.nn.dropout(t_nodes[k],feat_dr))
             
+            # Add bias
+            h_k_out = tf.nn.bias_add(h_k_out, self.Ws_bias[k])
+
             if k == 0:
                 out = tf.expand_dims(h_k_out, 0)
             else: 

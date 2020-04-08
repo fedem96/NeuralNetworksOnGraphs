@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import datetime, os
+from tqdm import tqdm
 
 class Planetoid(tf.keras.Model):
 
@@ -11,7 +12,7 @@ class Planetoid(tf.keras.Model):
         self.features_size = len(labels)
         self.labels_size = len(labels[0])
         self.embedding_size = embedding_dim
-        self.q  = random_walk_length
+        self.q = random_walk_length
         self.d = window_size
         self.r1 = neg_sample
         self.r2 = sample_context_rate
@@ -28,13 +29,13 @@ class Planetoid(tf.keras.Model):
             # random walk from S of length q
             random_walk = [node]
             for _ in range(self.q):
-                el = self.A[perm[random_walk[-1]]].indices
-                count = len(self.A[perm[random_walk[-1]]].indices)
-                while not el in perm and count > 0:
-                    el = self.A[perm[random_walk[-1]]].indices
-                    count -= 1
+                el = self.A[random_walk[-1]].indices
+                count = len(self.A[random_walk[-1]].indices)
+                # while count > 0:
+                #     el = self.A[perm[random_walk[-1]]].indices
+                #     count -= 1
                 if count == 0: continue # the last node in random walk has any neighbors in perm
-                random_walk.append(np.random.choice(self.A[perm[random_walk[-1]]].indices))
+                random_walk.append(np.random.choice(self.A[random_walk[-1]].indices))
 
             i = np.random.randint(0, len(random_walk))
             if gamma == 1:
@@ -46,11 +47,11 @@ class Planetoid(tf.keras.Model):
         else:
             if gamma == 1:
                 i, c = np.random.choice(perm, 2)
-                while (self.labels[perm[i]] != self.labels[perm[c]]).any():
+                while (self.labels[i] != self.labels[c]).any():
                     c = np.random.choice(perm)
             elif gamma == -1:
                 i, c = np.random.choice(perm, 2)
-                while (self.labels[perm[i]] == self.labels[perm[c]]).all():
+                while (self.labels[i] == self.labels[c]).all():
                     c = np.random.choice(perm)
             
         return i, c, gamma
@@ -58,13 +59,13 @@ class Planetoid(tf.keras.Model):
     def labeled_batch(self, features, labels, mask_train, N1):
         """ Generate mini-batch for labeled nodes """
         while True:
-            indices = np.random.permutation(len(features[mask_train]))
+            perm = np.random.permutation(len(features[mask_train]))
             j = 0
             while j < len(mask_train):
                 k = min(len(mask_train), j+N1)
-                b_x = features[indices[j:k]]
-                b_y = labels[indices[j:k]]
-                yield np.array(b_x, dtype=np.float32), np.array(b_y, dtype=np.float32), indices[j:k]
+                b_x = features[perm[j:k]]
+                b_y = labels[perm[j:k]]
+                yield np.array(b_x, dtype=np.float32), np.array(b_y, dtype=np.float32), np.array(perm[j:k], dtype=np.int32)
                 j = k
 
     def compute_iters(self, it):
@@ -92,12 +93,12 @@ class Planetoid(tf.keras.Model):
             self.eval(features, labels, mask_val, L_s, val_accuracy, val_loss)
 
             print("Epoch {:d}, Validation Loss: {:.3f}, Validation Accuracy: {:.3f}\n".format(epoch, val_loss.result(), val_accuracy.result()))
-
+        
             if val_accuracy.result() > max_t_acc:
                 max_t_acc = val_accuracy.result()
-                if not checkpoint_path==None: self.save_weights(checkpoint_path.format(epoch=epoch, v=max_t_acc))
+                if not checkpoint_path==None: self.save_weights(checkpoint_path)
                 ep_wait = 0
-            else:
+            elif patience > 0:      # patience < 0 means no early stopping
                 ep_wait += 1
                 if ep_wait >= patience: 
                     print("Early stop at epoch {:d}, best val acc {:03f}".format(epoch, max_t_acc))
@@ -109,6 +110,9 @@ class Planetoid(tf.keras.Model):
             val_loss.reset_states()
             train_accuracy.reset_states()
             val_accuracy.reset_states()
+
+        print("Best val acc {:03f}".format(max_t_acc))
+        
 
 
     def test(self, features, labels, mask_test, L_s, test_accuracy, test_loss):
@@ -149,7 +153,7 @@ class Planetoid_T(Planetoid):
         """
         if modality == "s":
             # freeze embedding during label classification
-            self.embedding.trainable = False
+            # self.embedding.trainable = False
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True
 
             h_f = self.h_k(inputs[0])
@@ -216,7 +220,7 @@ class Planetoid_T(Planetoid):
 
     def pretrain_step(self, features, mask_test, L_u, optimizer_u, train_loss_u, iters, N2):
 
-        for it in range(1, iters+1):
+        for it in tqdm(range(1, iters+1)):
             b_x, b_y = next(self.context_batch(N2))
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
@@ -300,8 +304,8 @@ class Planetoid_I(Planetoid):
                 context_b_x, context_b_y = [], []
                 k = min(len(perm), j+N2)
                 for n in perm[j:k]:
-                    if mask_test[n]:
-                        continue    # aka test node
+                    # if mask_test[n]:
+                    #     continue    # aka test node
                     i, c, gamma = self.sample_context(n, perm)
                     context_b_x.append([i, c])
                     context_b_y.append(gamma)
@@ -337,7 +341,7 @@ class Planetoid_I(Planetoid):
 
     def pretrain_step(self, features, mask_test, L_u, optimizer_u, train_loss_u, iters, N2):
     
-        for it in range(1, iters+1):
+        for it in tqdm(range(1, iters+1)):
             b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2))
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")

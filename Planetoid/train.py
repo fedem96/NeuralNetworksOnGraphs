@@ -54,8 +54,8 @@ def main(modality, dataset_name,
     train_loss_u = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
     val_loss = tf.keras.metrics.Mean('val_loss', dtype=tf.float32)
 
-    optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)       # , momentum=0.99)
-    optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)       # , momentum=0.99)
+    optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)      #, momentum=0.99)
+    optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)         #, momentum=0.99)
 
     print("pre-train model")
     # Pretrain iterations on graph context
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
     
     # dataset choice
-    parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-d", "--dataset", help="dataset to use", default="pubmed", choices=["citeseer", "cora", "pubmed"])
     
     # network hyperparameters
     parser.add_argument("-emb", "--embedding-dim", help="node embedding size", default=50, type=int)

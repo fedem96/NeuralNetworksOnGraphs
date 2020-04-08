@@ -8,7 +8,7 @@ from add_parent_path import add_parent_path
 from models import GAT
 
 with add_parent_path():
-    from metrics import masked_accuracy, masked_loss
+    from metrics import masked_accuracy, masked_loss, EarlyStoppingAccLoss
     from utils import *
 
 def main(dataset_name, 
@@ -26,6 +26,7 @@ def main(dataset_name,
 
     print("shuffling dataset")
     features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
+    features = normalize_features(features)
     
     print("obtaining masks")
     mask_train, mask_val, mask_test = split(dataset_name, labels)
@@ -42,19 +43,14 @@ def main(dataset_name,
     model = GAT(graph, num_classes, hidden_units, nheads, feat_drop_rate, coefs_drop_rate)
 
     model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_pred-y_true), 
-                    optimizer=optimizer, metrics=[masked_accuracy])
+                    optimizer=optimizer, metrics=[masked_accuracy], run_eagerly=True)
 
 
-    print("begin training")
-    callbacks = []
-    if not checkpoint_path == None:
-        checkpoint_path += 'GAT_ckpts/cp.ckpt'
-        callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1))
-    callbacks.append(TensorBoard(log_dir='logs')) #TODO: change dir
-    callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=patience, verbose=1, mode='min') )
-    callbacks.append(EarlyStopping(monitor='val_masked_accuracy', min_delta=0, patience=patience, verbose=1, mode='max') )
+    print("begin training")    
+    tb = TensorBoard(log_dir='logs') #TODO: change dir
+    es = EarlyStoppingAccLoss(patience, checkpoint_path, 'GAT')
 
-    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks)
+    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es])
 
 
 if __name__ == '__main__':

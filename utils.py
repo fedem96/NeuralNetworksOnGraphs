@@ -120,7 +120,7 @@ def read_p(dataset):
     labels = int_enc(labels, sorted(classes))
     o_h_labels = one_hot_enc(n_classes=3, labels=labels)
 
-    return np.array(features), np.array(neighbors), labels, o_h_labels, keys
+    return np.array(features, dtype=np.float32), np.array(neighbors), labels, o_h_labels, keys
 
 
 def one_hot_enc(n_classes, labels):
