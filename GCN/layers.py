@@ -32,9 +32,11 @@ class GraphConvolution(tf.keras.layers.Layer):
     def build(self, input_shape):
         self.fin = input_shape[1]
         self.theta = self.add_weight(shape=[self.fin, self.fout], initializer='glorot_uniform', dtype=self._dtype)
+        self.bias = self.add_weight(shape=[self.fout], initializer='zeros', dtype=self._dtype)
 
     def call(self, x):
         x = tf.cast(x, self._dtype)
         mx = tf.sparse.sparse_dense_matmul(self.renormalized_matrix, x) # shapes: (n, n)   *   (n, fin)  -> (n, fin)
         o = tf.matmul(mx, self.theta)                                   # shapes: (n, fin) * (fin, fout) -> (n, fout)
+        o = tf.nn.bias_add(o, self.bias)
         return o if self.activation is None else self.activation(o)

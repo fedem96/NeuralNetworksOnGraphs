@@ -47,7 +47,7 @@ def main(dataset_name,
 
     print("begin training")
     tb = TensorBoard(log_dir='logs') #TODO: change dir
-    es = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=1, mode='auto') # TODO: check if same as paper
+    es = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=1, mode='auto')
     # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
     model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es])
 
@@ -59,15 +59,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train a ChebNet')
 
     # dataset choice
-    parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-d", "--dataset", help="dataset to use", default="pubmed", choices=["citeseer", "cora", "pubmed"])
 
     # network hyperparameters
     parser.add_argument("-dr", "--dropout-rate", help="dropout rate for dropout layers (fraction of the input units to drop)", default=0.5, type=float)
-    parser.add_argument("-K", "--num-polynomials", help="number of Chebychev polynomials (there will be used polynomials from order 0 to K-1)", default=3, type=int)
+    parser.add_argument("-K", "--num-polynomials", help="number of Chebychev polynomials (there will be used polynomials from order 0 to K-1)", default=4, type=int)
     parser.add_argument("-hu", "--hidden-units", help="number of Chebychev filters in the first layer", default=16, type=int)
 
     # optimization hyperparameters
-    parser.add_argument("-e", "--epochs", help="number of training epochs", default=10, type=int)
+    parser.add_argument("-e", "--epochs", help="number of training epochs", default=200, type=int)
     parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=0.01, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
 

@@ -20,5 +20,6 @@ class ChebNet(tf.keras.models.Sequential):
         self.compile(
             loss=lambda y_true, y_pred: masked_loss(y_true, y_pred, 'categorical_crossentropy') + l2_weight * tf.nn.l2_loss(self.trainable_weights[0]), # regularize first layer only
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-            metrics=[masked_accuracy]
+            metrics=[masked_accuracy],
+            # run_eagerly=True
         )

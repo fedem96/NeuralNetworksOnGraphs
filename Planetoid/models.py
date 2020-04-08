@@ -351,7 +351,7 @@ class Planetoid_I(Planetoid):
             train_loss_u(loss_u)
 
     def eval(self, features, labels, mask, L_s, test_accuracy, test_loss):
-
+    
         predictions = self.call(features[mask], modality="s")
         loss = L_s(labels[mask], predictions)
 
