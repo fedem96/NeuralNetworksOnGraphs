@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     # optimization parameters
     parser.add_argument("-e", "--epochs", help="training epochs", default=10, type=int)
-    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=400, type=int)
+    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=10400, type=int)
     parser.add_argument("-t1", "--supervised-batch", help="supervised batch number at each epoch", default=1.0, type=float)
     parser.add_argument("-t2", "--unsupervised-batch", help="unsupervised batch number at each epoch", default=0.1, type=float)
     parser.add_argument("-n1", "--supervised-batch-size", help="supervised mini-batch size", default=200, type=int)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
     parser.add_argument("-w", "--window-size", help="window size", default=3, type=int)
     parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=5/6, type=float)
-    parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=5/6, type=float)
+    parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=0.038, type=float)
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)

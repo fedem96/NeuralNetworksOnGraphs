@@ -132,14 +132,14 @@ class Planetoid_T(Planetoid):
 
         # Hidden features representations
         self.h_k = tf.keras.layers.Dense(
-            self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
+            self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Embedding for graph context
         self.embedding = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
 
         # Hidden embedding representations
         self.h_l = tf.keras.layers.Dense(
-            self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
+            self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Output layer after concatenation
         self.pred_layer = tf.keras.layers.Dense(
@@ -246,7 +246,7 @@ class Planetoid_I(Planetoid):
         super().__init__(*args, **kwargs)
 
         # Hidden features representations
-        self.h_k = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.h_k = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Parametric Embedding for graph context
         self.par_embedding = tf.keras.layers.Dense(self.embedding_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
@@ -255,7 +255,7 @@ class Planetoid_I(Planetoid):
         self.embedding = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
 
         # Hidden embedding representations
-        self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Output layer after concatenation
         self.pred_layer = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
