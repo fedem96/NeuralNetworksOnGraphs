@@ -52,7 +52,7 @@ def main(dataset_name,
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Train GAT')
+    parser = argparse.ArgumentParser(description='Test GAT')
 
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])

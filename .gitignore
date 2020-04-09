@@ -3,3 +3,5 @@ data/
 *.vscode/
 *__pycache__/
 *logs/
+*runs/
+*cache/

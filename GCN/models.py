@@ -1,27 +1,21 @@
-import sys, os
-
 import numpy as np
+import pickle
 import tensorflow as tf
-from add_parent_path import add_parent_path
 
 from layers import GraphConvolution
-
-with add_parent_path():
-    from metrics import *
 
 
 class GCN(tf.keras.models.Sequential):
 
-    def __init__(self, renormalized_matrix, num_classes, dropout_rate, hidden_units, learning_rate, l2_weight):
-        super().__init__([
-            tf.keras.layers.Dropout(dropout_rate),
-            GraphConvolution(renormalized_matrix, num_filters=hidden_units, activation="relu"),
-            tf.keras.layers.Dropout(dropout_rate),
-            GraphConvolution(renormalized_matrix, num_filters=num_classes, activation="softmax"),
-        ])
+    def __init__(self, renormalized_matrix=None, num_classes=2, dropout_rate=None, hidden_units=16, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self.compile(
-            loss=lambda y_true, y_pred: masked_loss(y_true, y_pred, 'categorical_crossentropy') + l2_weight * tf.nn.l2_loss(self.trainable_weights[0]), # regularize first layer only
-            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-            metrics=[masked_accuracy]
-        )
+        if dropout_rate        is not None: self.add(tf.keras.layers.Dropout(dropout_rate))
+        if renormalized_matrix is not None: self.add(GraphConvolution(renormalized_matrix, num_filters=hidden_units, activation="relu"))
+        if dropout_rate        is not None: self.add(tf.keras.layers.Dropout(dropout_rate))                                                
+        if renormalized_matrix is not None: self.add(GraphConvolution(renormalized_matrix, num_filters=num_classes, activation="softmax"))
+
+        self.renormalized_matrix = renormalized_matrix
+        self.num_classes = num_classes
+        self.dropout_rate = dropout_rate
+        self.hidden_units = hidden_units

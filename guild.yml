@@ -6,13 +6,13 @@
     train:
       description: 
       main: Planetoid/train
-      sourcecode: '*.py'
+      sourcecode: 'Planetoid/*.py'
       flags-dest: args
 
     train-i:
       description: Train Planetoid-I with hyperparameters reported in the paper
       main: Planetoid/train
-      sourcecode: '*.py'
+      sourcecode: 'Planetoid/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -24,7 +24,7 @@
     train-t:
       description: Train Planetoid-T with hyperparameters reported in the paper
       main: Planetoid/train
-      sourcecode: '*.py'
+      sourcecode: 'Planetoid/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -46,7 +46,7 @@
     test:
       description: Test Planetoid; insert the checkpoint to the model (checkpoint-path)
       main: Planetoid/test
-      sourcecode: '*.py'
+      sourcecode: 'Planetoid/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -69,13 +69,13 @@
     train:
       description: 
       main: ChebNet/train
-      sourcecode: '*.py'
+      sourcecode: 'ChebNet/*.py'
       flags-dest: args
 
     train-citeseer:
       description: Train ChebNet on citeseer dataset with hyperparameters reported in GCN paper
       main: ChebNet/train
-      sourcecode: '*.py'
+      sourcecode: 'ChebNet/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -86,7 +86,7 @@
     train-cora:
       description: Train ChebNet on cora dataset with hyperparameters reported in GCN paper
       main: ChebNet/train
-      sourcecode: '*.py'
+      sourcecode: 'ChebNet/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -97,7 +97,7 @@
     train-pubmed:
       description: Train ChebNet on pubmed dataset with hyperparameters reported in GCN paper
       main: ChebNet/train
-      sourcecode: '*.py'
+      sourcecode: 'ChebNet/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -108,7 +108,7 @@
     test:
       description: 
       main: ChebNet/test
-      sourcecode: '*.py'
+      sourcecode: 'ChebNet/*.py'
       flags-dest: args
 
 
@@ -121,14 +121,21 @@
     train:
       description: 
       main: GCN/train
-      sourcecode: '*.py'
+      sourcecode: 'GCN/*.py'
       flags-dest: args
 
     test:
       description: 
       main: GCN/test
-      sourcecode: '*.py'
+      sourcecode: 'GCN/*.py'
       flags-dest: args
+  #     requires: trained-model
+
+  # resources:
+  #   trained-model:
+  #     sources:
+  #     - operation: train
+  #       select: gcn.hdf5
 
 
 ########## GAT ##########
@@ -140,13 +147,13 @@
     train:
       description: 
       main: GAT/train
-      sourcecode: '*.py'
+      sourcecode: 'GAT/*.py'
       flags-dest: args
 
     train-citeseer:
       description: Train GAT on citeseer dataset with hyperparameters reported in the paper
       main: GAT/train
-      sourcecode: '*.py'
+      sourcecode: 'GAT/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -155,7 +162,7 @@
     train-cora:
       description: Train GAT on cora dataset with hyperparameters reported in the paper
       main: GAT/train
-      sourcecode: '*.py'
+      sourcecode: 'GAT/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -164,7 +171,7 @@
     train-pubmed:
       description: Train GAT on pubmed dataset with hyperparameters reported in the paper
       main: GAT/train
-      sourcecode: '*.py'
+      sourcecode: 'GAT/*.py'
       flags-dest: args
       flags:
         dataset:
@@ -179,7 +186,7 @@
     test:
       description: 
       main: GAT/test
-      sourcecode: '*.py'
+      sourcecode: 'GAT/*.py'
       flags-dest: args
       flags:
         checkpoint-path:

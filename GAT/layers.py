@@ -32,9 +32,6 @@ class Attention_layer(tf.keras.layers.Layer):
         self.As_bias = self.add_weight(shape=[self.nheads, 2], initializer='zeros',  # 8 x 1
                                     trainable = True, dtype=self._dtype)
 
-        super().build(input_shape)
-
-
     def call(self, inputs, training):
 
         graph = self.toSparseTensor()

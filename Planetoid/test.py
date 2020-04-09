@@ -53,7 +53,7 @@ def main(modality, dataset_name, embedding_dim,
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Train Planetoid')
+    parser = argparse.ArgumentParser(description='Test Planetoid')
 
     # modality can be I inductive T transductive
     parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
