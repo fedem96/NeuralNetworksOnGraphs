@@ -31,10 +31,7 @@ class Planetoid(tf.keras.Model):
             for _ in range(self.q):
                 el = self.A[random_walk[-1]].indices
                 count = len(self.A[random_walk[-1]].indices)
-                # while count > 0:
-                #     el = self.A[perm[random_walk[-1]]].indices
-                #     count -= 1
-                if count == 0: continue # the last node in random walk has any neighbors in perm
+                if count == 0: continue # the last node in random walk has not any neighbors in perm
                 random_walk.append(np.random.choice(self.A[random_walk[-1]].indices))
 
             i = np.random.randint(0, len(random_walk))
@@ -132,14 +129,15 @@ class Planetoid_T(Planetoid):
 
         # Hidden features representations
         self.h_k = tf.keras.layers.Dense(
-            self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
+            self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
-        # Embedding for graph context
-        self.embedding = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
+        # Embedding layers for graph context
+        self.emb_ist = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
+        self.emb_cont = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
 
         # Hidden embedding representations
         self.h_l = tf.keras.layers.Dense(
-            self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
+            self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Output layer after concatenation
         self.pred_layer = tf.keras.layers.Dense(
@@ -153,12 +151,13 @@ class Planetoid_T(Planetoid):
         """
         if modality == "s":
             # freeze embedding during label classification
-            # self.embedding.trainable = False
+            self.emb_cont.trainable = self.emb_ist.trainable = False        
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True
 
             h_f = self.h_k(inputs[0])
 
-            embs = self.embedding(inputs[1])
+            embs = self.emb_ist(inputs[1])
+            embs = self.emb_cont(inputs[1])
             h_e = self.h_l(embs)
 
             h_node = tf.keras.layers.concatenate([h_f, h_e])
@@ -169,10 +168,10 @@ class Planetoid_T(Planetoid):
         elif modality == "u":
             # enable only embedding layer during unsupervised learning
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = False
-            self.embedding.trainable = True
+            self.emb_cont.trainable = True
 
-            emb_i = self.embedding(inputs[:, 0])
-            emb_c = self.embedding(inputs[:, 1])
+            emb_i = self.emb_ist(inputs[:, 0])
+            emb_c = self.emb_cont(inputs[:, 1])
 
             out = tf.multiply(emb_i, emb_c)
             return out
@@ -246,7 +245,7 @@ class Planetoid_I(Planetoid):
         super().__init__(*args, **kwargs)
 
         # Hidden features representations
-        self.h_k = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.h_k = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Parametric Embedding for graph context
         self.par_embedding = tf.keras.layers.Dense(self.embedding_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
@@ -255,7 +254,7 @@ class Planetoid_I(Planetoid):
         self.embedding = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
 
         # Hidden embedding representations
-        self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Output layer after concatenation
         self.pred_layer = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)

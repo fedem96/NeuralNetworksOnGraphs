@@ -42,7 +42,7 @@ def main(dataset_name,
     print("defining model")
     model = GAT(graph, num_classes, hidden_units, nheads, feat_drop_rate, coefs_drop_rate)
 
-    model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_pred-y_true), 
+    model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_true-y_pred), 
                     optimizer=optimizer, metrics=[masked_accuracy], run_eagerly=True)
 
 

@@ -24,8 +24,8 @@ class UnlabeledLoss(tf.keras.losses.Loss):
     def call(self, y_true, y_pred):
         s = tf.reduce_sum(y_pred, axis=1)
         dot_prod = tf.math.multiply(s, y_true)
-        # Credits to https://www.tensorflow.org/api_docs/python/tf/math/log_sigmoid
-        loss = tf.reduce_sum(tf.nn.softplus(-dot_prod))
+        # Credits to https://www.tensorflow.org/api_docs/python/tf/math/log_sigmoid tf.nn.softplus(-dot_prod)
+        loss = - tf.reduce_sum(tf.math.log(tf.sigmoid(dot_prod)))
         return loss
 
 class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
@@ -59,7 +59,7 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
             self.best_l = min(self.best_l, current_l)
             self.best_a = max(self.best_a, current_a)
             self.wait = 0
-        else:
+        elif self.patience > 0:  # patience<0 means no early stopping
             self.wait += 1
             if self.wait >= self.patience:
                 self.stopped_epoch = epoch
