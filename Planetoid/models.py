@@ -70,8 +70,8 @@ class Planetoid(tf.keras.Model):
             it = 1 if np.random.random() < it else 0
         return int(it) 
 
-    def train(self, features, labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, 
-            train_accuracy, val_accuracy, train_loss, train_loss_u, val_loss, T1, T2, N1, N2, patience, checkpoint_path=None):
+    def train(self, features, labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, 
+        val_accuracy, train_loss, train_loss_u, val_loss, T1, T2, N1, N2, patience, checkpoint_path=None, verbose=1):
 
         max_t_acc = 0
         if not checkpoint_path==None:
@@ -80,16 +80,16 @@ class Planetoid(tf.keras.Model):
 
         for epoch in range(1, epochs+1):
 
-            print("Epoch: {:d} ==> ".format(epoch), end=' ')
+            if verbose > 0: print("Epoch: {:d} ==> ".format(epoch), end=' ')
 
             self.train_step(features, labels, mask_train, mask_test, L_s, L_u, optimizer_u, optimizer_s,
                 train_accuracy, train_loss, train_loss_u, T1, T2, N1, N2)
 
-            print("Train Loss: s {:.3f} u {:.3f}, Train Accuracy: {:.3f}".format(train_loss.result(), train_loss_u.result(), train_accuracy.result()))
+            if verbose > 0: print("Train Loss: s {:.3f} u {:.3f}, Train Accuracy: {:.3f}".format(train_loss.result(), train_loss_u.result(), train_accuracy.result()))
 
             self.eval(features, labels, mask_val, L_s, val_accuracy, val_loss)
 
-            print("Epoch {:d}, Validation Loss: {:.3f}, Validation Accuracy: {:.3f}\n".format(epoch, val_loss.result(), val_accuracy.result()))
+            if verbose > 0: print("Epoch {:d}, Validation Loss: {:.3f}, Validation Accuracy: {:.3f}\n".format(epoch, val_loss.result(), val_accuracy.result()))
         
             if val_accuracy.result() > max_t_acc:
                 max_t_acc = val_accuracy.result()
@@ -98,7 +98,7 @@ class Planetoid(tf.keras.Model):
             elif patience > 0:      # patience < 0 means no early stopping
                 ep_wait += 1
                 if ep_wait >= patience: 
-                    print("Early stop at epoch {:d}, best val acc {:03f}".format(epoch, max_t_acc))
+                    if verbose > 0: print("Early stop at epoch {:d}, best val acc {:03f}".format(epoch, max_t_acc))
                     break
 
             # Reset metrics every epoch

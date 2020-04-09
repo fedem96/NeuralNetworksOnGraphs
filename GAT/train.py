@@ -52,7 +52,7 @@ def main(dataset_name,
 
     model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)
 
-    print('\nbest val_acc {:.3f} val_loss {:.3f} \n' .format(es.stopped_epoch, es.best_a, es.best_l))
+    print('\nbest val_acc {:.3f} val_loss {:.3f} \n' .format(es.best_a, es.best_l))
     best_a = es.best_a
     best_l = es.best_l
 

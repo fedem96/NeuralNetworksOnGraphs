@@ -18,7 +18,7 @@ def main(modality, dataset_name,
         learning_rate_unsupervised, patience,
         random_walk_length, window_size, 
         neg_sample, sample_context_rate,
-        data_seed, net_seed, checkpoint_path):
+        data_seed, net_seed, checkpoint_path, verbose):
     
     print("Planetoid-{:s}!".format(modality))
     
@@ -26,17 +26,17 @@ def main(modality, dataset_name,
     np.random.seed(data_seed)
     tf.random.set_seed(net_seed)
 
-    print("reading dataset")
+    if verbose > 0: print("reading dataset")
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
     num_classes = len(set(labels))
 
-    print("shuffling dataset")
+    if verbose > 0: print("shuffling dataset")
     features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
     
-    print("obtaining masks")
+    if verbose > 0: print("obtaining masks")
     mask_train, mask_val, mask_test = split(dataset_name, labels)
 
-    print("calculating adjacency matrix")
+    if verbose > 0: print("calculating adjacency matrix")
     A = adjacency_matrix(neighbors)
 
     # Define model, loss, metrics and optimizers
@@ -57,13 +57,13 @@ def main(modality, dataset_name,
     optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)      #, momentum=0.99)
     optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)         #, momentum=0.99)
 
-    print("pre-train model")
+    if verbose > 0: print("pre-train model")
     # Pretrain iterations on graph context
     model.pretrain_step(features, mask_test, L_u, optimizer_u, train_loss_u, pretrain_batch, unsupervised_batch_size)
 
-    print("begin training")
-    model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, 
-        train_loss, train_loss_u, val_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path)
+    if verbose > 0: print("begin training")
+    model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, train_loss, 
+            train_loss_u, val_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path, verbose)
 
 if __name__ == '__main__':
 
@@ -102,6 +102,9 @@ if __name__ == '__main__':
     # save model weights
     parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
 
+    # verbose
+    parser.add_argument("-v", "--verbose", help="useful print", default=1, type=int)
+
     args = parser.parse_args()
     
     main(args.modality, args.dataset, 
@@ -111,6 +114,6 @@ if __name__ == '__main__':
         args.learning_rate_unsupervised, args.patience,
         args.random_walk_length, args.window_size, 
         args.neg_sample_rate, args.sample_context_rate,
-        args.data_seed, args.net_seed, args.checkpoint_path)
+        args.data_seed, args.net_seed, args.checkpoint_path, args.verbose)
 
 
