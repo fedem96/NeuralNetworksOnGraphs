@@ -14,43 +14,47 @@ with add_parent_path():
 def main(dataset_name, 
         nheads, hidden_units, feat_drop_rate, coefs_drop_rate,
         epochs, learning_rate, l2_weight, patience, 
-        data_seed, net_seed, checkpoint_path):
+        data_seed, net_seed, checkpoint_path, verbose):
 
     # reproducibility
     np.random.seed(data_seed)
     tf.random.set_seed(net_seed)
 
-    print("reading dataset")
+    if verbose > 0: print("reading dataset")
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
     num_classes = len(set(labels))
 
-    print("shuffling dataset")
+    if verbose > 0: print("shuffling dataset")
     features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
     features = normalize_features(features)
     
-    print("obtaining masks")
+    if verbose > 0: print("obtaining masks")
     mask_train, mask_val, mask_test = split(dataset_name, labels)
     y_train = np.multiply(o_h_labels, np.broadcast_to(mask_train.T, o_h_labels.T.shape).T )
     y_val   = np.multiply(o_h_labels, np.broadcast_to(mask_val.T,   o_h_labels.T.shape).T )
     y_test  = np.multiply(o_h_labels, np.broadcast_to(mask_test.T,  o_h_labels.T.shape).T )
 
-    print("calculating adjacency matrix")
+    if verbose > 0: print("calculating adjacency matrix")
     graph = adjacency_matrix(neighbors)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
-    print("defining model")
+    if verbose > 0: print("defining model")
     model = GAT(graph, num_classes, hidden_units, nheads, feat_drop_rate, coefs_drop_rate)
 
     model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_true-y_pred), 
-                    optimizer=optimizer, metrics=[masked_accuracy], run_eagerly=True)
+                    optimizer=optimizer, metrics=[masked_accuracy])
 
 
-    print("begin training")    
+    if verbose > 0: print("begin training")    
     tb = TensorBoard(log_dir='logs') #TODO: change dir
     es = EarlyStoppingAccLoss(patience, checkpoint_path, 'GAT')
 
-    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es])
+    model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)
+
+    print('\nbest val_acc {:.3f} val_loss {:.3f} \n' .format(es.stopped_epoch, es.best_a, es.best_l))
+    best_a = es.best_a
+    best_l = es.best_l
 
 
 if __name__ == '__main__':
@@ -78,6 +82,9 @@ if __name__ == '__main__':
 
     # save model weights
     parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
+    
+    # verbose
+    parser.add_argument("-v", "--verbose", help="useful print", default=1, type=int)
 
     args = parser.parse_args()
     nheads = [int(item) for item in args.nheads.split(',')]
@@ -85,4 +92,4 @@ if __name__ == '__main__':
     main(args.dataset, 
         nheads, args.hidden_units, args.feat_drop_rate, args.coefs_drop_rate,
         args.epochs, args.learning_rate, args.l2_weight, args.patience, 
-        args.data_seed, args.net_seed, args.checkpoint_path)
+        args.data_seed, args.net_seed, args.checkpoint_path, args.verbose)
