@@ -23,13 +23,13 @@ class Attention_layer(tf.keras.layers.Layer):
                                 initializer='glorot_uniform', name='Ws', trainable=True)
 
         self.Ws_bias = self.add_weight(shape=[self.nheads, self.output_size], initializer='zeros', 
-                                    trainable = True, dtype=self._dtype)
+                                    trainable = True, dtype=self._dtype, name='Ws_bias')
 
 
         self.As = self.add_weight(shape=[self.nheads, 2*self.output_size, 1],
                                 initializer='glorot_uniform', name='As', trainable = True)
         
-        self.As_bias = self.add_weight(shape=[self.nheads, 2], initializer='zeros',  # 8 x 1
+        self.As_bias = self.add_weight(name='As_bias', shape=[self.nheads, 2], initializer='zeros',  # 8 x 1
                                     trainable = True, dtype=self._dtype)
 
     def call(self, inputs, training):

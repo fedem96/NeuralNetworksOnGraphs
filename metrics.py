@@ -39,6 +39,7 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
         super(EarlyStoppingAccLoss, self).__init__()
 
         self.patience = patience
+        self.best_weights = None
         self.checkpoint_path = checkpoint_path
         if not self.checkpoint_path == None:
             ckpt_name = model_name + '_ckpts/cp.ckpt'
@@ -54,8 +55,10 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
         current_l = logs.get('val_loss')
         current_a = logs.get('val_masked_accuracy')
         if np.less(current_l, self.best_l) or np.greater(current_a, self.best_a):
-            if np.less(current_l, self.best_l) and np.greater(current_a, self.best_a) and not self.checkpoint_path == None:
-                self.model.save_weights(self.checkpoint_path)
+            if np.less(current_l, self.best_l) and np.greater(current_a, self.best_a):
+                self.best_weights = self.model.get_weights()
+                if not self.checkpoint_path == None:
+                    self.model.save_weights(self.checkpoint_path)
             self.best_l = min(self.best_l, current_l)
             self.best_a = max(self.best_a, current_a)
             self.wait = 0
@@ -66,6 +69,7 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
                 self.model.stop_training = True
 
     def on_train_end(self, logs=None):
+        self.model.set_weights(self.best_weights)
         if self.stopped_epoch > 0:
             print('Early stop at epoch {:d} with best val_acc {:.3f} val_loss {:.3f}' .format(self.stopped_epoch,
                                                                                        self.best_a, self.best_l))

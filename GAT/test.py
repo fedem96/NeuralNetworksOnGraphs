@@ -13,7 +13,7 @@ with add_parent_path():
 
 def main(dataset_name, 
         nheads, hidden_units, feat_drop_rate, 
-        coefs_drop_rate, l2_weight,
+        coefs_drop_rate, l2_weight, learning_rate,
         data_seed, net_seed, checkpoint_path):
 
     # reproducibility
@@ -36,18 +36,21 @@ def main(dataset_name,
     print("calculating adjacency matrix")
     graph = adjacency_matrix(neighbors)
 
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+
     print("defining model")
     model = GAT(graph, num_classes, hidden_units, nheads, feat_drop_rate, coefs_drop_rate)
 
     model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_pred-y_true), 
-                    metrics=[masked_accuracy])
+                optimizer=optimizer, metrics=[masked_accuracy])
 
 
     print("load model from checkpoint")
-    model.load_weights(checkpoint_path+'GAT_ckpts/cp.ckpt')
+    model.load_weights(checkpoint_path+'GAT_ckpts/cp.ckpt').expect_partial()
 
     print("test the model on test set")
-    model.evaluate(features, y_test, batch_size=len(features))    
+    test_loss, test_acc = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
+    print("Test loss {:.3f} Train acc {:.3f}" .format( test_loss, test_acc))
 
 
 if __name__ == '__main__':
@@ -64,6 +67,7 @@ if __name__ == '__main__':
     parser.add_argument("-cd", "--coefs-drop-rate", help="dropout rate for attention coefficients (fraction of the input units to drop)", default=0.4, type=float)
 
     # optimization parameters
+    parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=5e-3, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
  
     # reproducibility
@@ -78,5 +82,5 @@ if __name__ == '__main__':
     
     main(args.dataset, 
         nheads, args.hidden_units, args.feat_drop_rate, 
-        args.coefs_drop_rate, args.l2_weight, 
+        args.coefs_drop_rate, args.l2_weight, args.learning_rate,
         args.data_seed, args.net_seed, args.checkpoint_path)

@@ -54,8 +54,8 @@ def main(modality, dataset_name,
     train_loss_u = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
     val_loss = tf.keras.metrics.Mean('val_loss', dtype=tf.float32)
 
-    optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)      #, momentum=0.99)
-    optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)         #, momentum=0.99)
+    optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)   
+    optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)      
 
     if verbose > 0: print("pre-train model")
     # Pretrain iterations on graph context
@@ -64,6 +64,14 @@ def main(modality, dataset_name,
     if verbose > 0: print("begin training")
     model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, train_loss, 
             train_loss_u, val_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path, verbose)
+
+    if verbose > 0: print("test the model on test set")
+
+    test_accuracy = tf.keras.metrics.CategoricalAccuracy(name="test_acc")
+    test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
+
+    t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy, test_loss)
+    print("Test loss {:.3f} Train acc {:.3f}" .format(t_loss, t_acc))
 
 if __name__ == '__main__':
 

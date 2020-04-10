@@ -74,6 +74,7 @@ class Planetoid(tf.keras.Model):
         val_accuracy, train_loss, train_loss_u, val_loss, T1, T2, N1, N2, patience, checkpoint_path=None, verbose=1):
 
         max_t_acc = 0
+        best_weights = None
         if not checkpoint_path==None:
             ckpt_name = 'Planetoid_ckpts/cp.ckpt'
             checkpoint_path = os.path.join(checkpoint_path, ckpt_name)
@@ -93,6 +94,7 @@ class Planetoid(tf.keras.Model):
         
             if val_accuracy.result() > max_t_acc:
                 max_t_acc = val_accuracy.result()
+                best_weights = self.get_weights()
                 if not checkpoint_path==None: self.save_weights(checkpoint_path)
                 ep_wait = 0
             elif patience > 0:      # patience < 0 means no early stopping
@@ -108,6 +110,8 @@ class Planetoid(tf.keras.Model):
             train_accuracy.reset_states()
             val_accuracy.reset_states()
 
+        self.set_weights(best_weights)
+
         print("Best val acc {:03f}".format(max_t_acc))
         
 
@@ -116,9 +120,7 @@ class Planetoid(tf.keras.Model):
 
         self.eval(features, labels, mask_test, L_s, test_accuracy, test_loss)
 
-        print("Test Loss: {:.3f}, Test Accuracy: {:.3f}".format(test_loss.result(), test_accuracy.result()))
-
-        return
+        return test_loss.result(), test_accuracy.result()
 
 
 class Planetoid_T(Planetoid):

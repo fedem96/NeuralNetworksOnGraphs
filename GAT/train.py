@@ -47,14 +47,17 @@ def main(dataset_name,
 
 
     if verbose > 0: print("begin training")    
-    tb = TensorBoard(log_dir='logs') #TODO: change dir
+    tb = TensorBoard(log_dir='logs')
     es = EarlyStoppingAccLoss(patience, checkpoint_path, 'GAT')
 
     model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)
 
     print('\nbest val_acc {:.3f} val_loss {:.3f} \n' .format(es.best_a, es.best_l))
-    best_a = es.best_a
-    best_l = es.best_l
+
+    print("test the model on test set")
+    test_loss, test_acc = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
+    print("Test loss {:.3f} Train acc {:.3f}" .format( test_loss, test_acc))
+
 
 
 if __name__ == '__main__':
@@ -81,7 +84,7 @@ if __name__ == '__main__':
     parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
     # save model weights
-    parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
+    parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default='./')
     
     # verbose
     parser.add_argument("-v", "--verbose", help="useful print", default=1, type=int)
