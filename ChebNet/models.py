@@ -9,17 +9,10 @@ with add_parent_path():
 
 class ChebNet(tf.keras.models.Sequential):
 
-    def __init__(self, norm_L, K, num_classes, dropout_rate, hidden_units, learning_rate, l2_weight):
-        super().__init__([
-            tf.keras.layers.Dropout(dropout_rate),
-            Chebychev(norm_L, K, num_filters=hidden_units, activation="relu"),
-            tf.keras.layers.Dropout(dropout_rate),
-            Chebychev(norm_L, K, num_filters=num_classes, activation="softmax"),
-        ])
-
-        self.compile(
-            loss=lambda y_true, y_pred: masked_loss(y_true, y_pred, 'categorical_crossentropy') + l2_weight * tf.nn.l2_loss(self.trainable_weights[0]), # regularize first layer only
-            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-            metrics=[masked_accuracy],
-            # run_eagerly=True
-        )
+    def __init__(self, norm_L=None, K=3, num_classes=2, dropout_rate=None, hidden_units=16, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if dropout_rate is not None: self.add(tf.keras.layers.Dropout(dropout_rate))
+        if norm_L       is not None: self.add(Chebychev(norm_L, K, num_filters=hidden_units, activation="relu"))
+        if dropout_rate is not None: self.add(tf.keras.layers.Dropout(dropout_rate))
+        if norm_L       is not None: self.add(Chebychev(norm_L, K, num_filters=num_classes, activation="softmax"))

@@ -50,22 +50,21 @@ def main(dataset_name,
         loss=lambda y_true, y_pred: masked_loss(y_true, y_pred, 'categorical_crossentropy') + l2_weight * tf.nn.l2_loss(model.trainable_weights[0]), # regularize first layer only
         optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         metrics=[masked_accuracy],
-        run_eagerly=True
+        # run_eagerly=True
     )
     model.build(features.shape)
     model.summary()
 
     print("begin training")
     callbacks = []
-    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=10, verbose=1))
+    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=10, restore_best_weights=True, verbose=1))
     callbacks.append(TensorBoard(log_dir='logs')) #TODO: change dir
     # if model_path is not None:
     #     callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=False, verbose=1))
     # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
     model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks)
     if model_path is not None:
-        model.to_file(model_path)
-        #model.save(model_path)
+        model.save_weights(model_path)
 
     y_pred = model.predict(features, len(features))
     print("validation accuracy:", float(masked_accuracy(y_val, y_pred)))

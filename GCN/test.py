@@ -14,7 +14,7 @@ with add_parent_path():
 def main(dataset_name,
         dropout_rate, hidden_units,
         training_epochs, learning_rate, l2_weight,
-        data_seed, net_seed,
+        data_seed, #net_seed,
         model_path):
 
     # reproducibility
@@ -48,6 +48,7 @@ def main(dataset_name,
         run_eagerly=True
     )
     model.build(features.shape)
+    model.summary()
     model.load_weights(model_path)
 
     print("test the model on test set")
@@ -66,14 +67,14 @@ if __name__ == '__main__':
     parser.add_argument("-dr", "--dropout-rate", help="dropout rate for dropout layers (fraction of the input units to drop)", default=0.5, type=float)
     parser.add_argument("-hu", "--hidden-units", help="number of Graph Convolutional filters in the first layer", default=16, type=int)
 
-    # optimization hyperparameters
+    # # optimization hyperparameters
     parser.add_argument("-e", "--epochs", help="number of training epochs", default=20, type=int)
     parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=0.01, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
-    parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
+    # parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
     # save model to file
     parser.add_argument("-m", "--model", help="path where to save model", default=None)
@@ -87,5 +88,5 @@ if __name__ == '__main__':
     main(args.dataset,
         args.dropout_rate, args.hidden_units,
         args.epochs, args.learning_rate, args.l2_weight,
-        args.data_seed, args.net_seed,
+        args.data_seed, #args.net_seed,
         args.model)

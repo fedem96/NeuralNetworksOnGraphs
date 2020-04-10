@@ -15,7 +15,7 @@ class GraphConvolution(tf.keras.layers.Layer):
     # computes: renormalized_matrix * X * theta
 
     def __init__(self, renormalized_matrix=None, num_filters=16, activation=None, *args, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
 
         if renormalized_matrix is not None:
             coo_mat = renormalized_matrix.tocoo()
@@ -24,7 +24,7 @@ class GraphConvolution(tf.keras.layers.Layer):
             self.coo_mat_shape = coo_mat.shape
 
         #self.n = renormalized_matrix.shape[0] # number of nodes
-        self.fout = num_filters               # number of output features
+        self.fout = num_filters                # number of output features
         
         if activation is not None: self.activation = tf.keras.activations.get(activation)
 
@@ -41,13 +41,12 @@ class GraphConvolution(tf.keras.layers.Layer):
         o = tf.nn.bias_add(o, self.bias)
         return o if self.activation is None else self.activation(o)
     
-    def get_config(self):
-        base_config = super().get_config()
-        config = {
-            'coo_mat_indices': self.coo_mat_indices,
-            'coo_mat_data': self.coo_mat_data,
-            'coo_mat_shape': self.coo_mat_shape,
-            'fout': self.fout,
-        }
-        return dict(list(base_config.items()) + list(config.items()))
-        # return base_config.update(config)
+    # def get_config(self):
+    #     base_config = super().get_config()
+    #     config = {
+    #         'coo_mat_indices': self.coo_mat_indices,
+    #         'coo_mat_data': self.coo_mat_data,
+    #         'coo_mat_shape': self.coo_mat_shape,
+    #         'fout': self.fout,
+    #     }
+    #     return dict(list(base_config.items()) + list(config.items()))

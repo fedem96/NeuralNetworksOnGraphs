@@ -5,3 +5,4 @@ data/
 *logs/
 *runs/
 *cache/
+*.hdf5

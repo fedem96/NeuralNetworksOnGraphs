@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 import tensorflow as tf
 
 from layers import GraphConvolution
