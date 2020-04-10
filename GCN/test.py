@@ -77,7 +77,7 @@ if __name__ == '__main__':
     # parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
     # save model to file
-    parser.add_argument("-m", "--model", help="path where to save model", default=None)
+    parser.add_argument("-cp", "--checkpoint-path", help="path where to save the weights", default=None)
 
     args = parser.parse_args()
 
@@ -89,4 +89,4 @@ if __name__ == '__main__':
         args.dropout_rate, args.hidden_units,
         args.epochs, args.learning_rate, args.l2_weight,
         args.data_seed, #args.net_seed,
-        args.model)
+        args.checkpoint_path)

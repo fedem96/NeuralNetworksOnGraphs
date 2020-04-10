@@ -1,35 +1,48 @@
-########## Planetoid ##########
-- model: Planetoid|planetoid
+########## Planetoid Inductive ##########
+- model: Planetoid-i|planetoid-i
   description: Revisiting Semi-Supervised Learning with Graph Embeddings (Yang et al., 2016)
   operations:
 
     train:
-      description: 
-      main: Planetoid/train
-      sourcecode: 'Planetoid/*.py'
-      flags-dest: args
-
-    train-i:
       description: Train Planetoid-I with hyperparameters reported in the paper
       main: Planetoid/train
       sourcecode: 'Planetoid/*.py'
       flags-dest: args
       flags:
-        dataset:
-          default: citeseer
-          choices: ["citeseer", "cora", "pubmed"]
         modality: 
           default: "I"
 
-    train-t:
+    test:
+      description: Test Planetoid; insert the checkpoint to the model (checkpoint-path)
+      main: Planetoid/test
+      sourcecode: 'Planetoid/*.py'
+      flags-dest: args
+      flags:
+        modality: 
+          default: "I"
+        checkpoint-path:
+          required: True
+
+    evaluate:
+      description: ... # TODO:
+      sourcecode: 'nothing'
+      steps:
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+            
+
+
+########## Planetoid Transductive ##########
+- model: Planetoid-t|planetoid-t
+  description: Revisiting Semi-Supervised Learning with Graph Embeddings (Yang et al., 2016)
+  operations:
+
+    train:
       description: Train Planetoid-T with hyperparameters reported in the paper
       main: Planetoid/train
       sourcecode: 'Planetoid/*.py'
       flags-dest: args
       flags:
-        dataset:
-          default: citeseer
-          choices: ["citeseer", "cora", "pubmed"]
         modality: 
           default: "T"
         learning-rate-unsupervised: 
@@ -49,14 +62,27 @@
       sourcecode: 'Planetoid/*.py'
       flags-dest: args
       flags:
-        dataset:
-          default: citeseer
-          choices: ["citeseer", "cora", "pubmed"]
         modality: 
-          default: "I"
-          choices: ["I", "T"]
+          default: "T"
+        learning-rate-unsupervised: 
+          default: 0.01
+        pretrain-batch: 
+          default: 2070
+        sample-context-rate:
+          default: 0.033
+        unsupervised-batch: 
+          default: 0
+        unsupervised-batch-size: 
+          default: 200
         checkpoint-path:
           required: True
+
+    evaluate:
+      description: ... # TODO:
+      sourcecode: 'nothing'
+      steps:
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
    
 
 
@@ -80,7 +106,7 @@
       flags:
         dataset:
           default: citeseer
-        K:
+        num-polynomials:
           default: 4
 
     train-cora:
@@ -91,7 +117,7 @@
       flags:
         dataset:
           default: cora
-        K:
+        num-polynomials:
           default: 3
 
     train-pubmed:
@@ -102,14 +128,25 @@
       flags:
         dataset:
           default: pubmed
-        K:
+        num-polynomials:
           default: 4
 
-    test:
+    test: # TODO: finish
       description: 
       main: ChebNet/test
       sourcecode: 'ChebNet/*.py'
       flags-dest: args
+
+    evaluate:
+      description: ... # TODO:
+      sourcecode: 'nothing'
+      steps:
+        - run: train-citeseer net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-citeseer data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
 
 
 ########## GCN ##########
@@ -124,18 +161,19 @@
       sourcecode: 'GCN/*.py'
       flags-dest: args
 
-    test:
+    test: # TODO: finish
       description: 
       main: GCN/test
       sourcecode: 'GCN/*.py'
       flags-dest: args
-  #     requires: trained-model
 
-  # resources:
-  #   trained-model:
-  #     sources:
-  #     - operation: train
-  #       select: gcn.hdf5
+    evaluate:
+      description: ... # TODO:
+      sourcecode: 'nothing'
+      steps:
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+
 
 
 ########## GAT ##########
@@ -191,3 +229,14 @@
       flags:
         checkpoint-path:
           required: True
+
+    evaluate:
+      description: ... # TODO:
+      sourcecode: 'nothing'
+      steps:
+        - run: train-citeseer net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-citeseer data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
