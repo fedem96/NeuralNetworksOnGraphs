@@ -16,35 +16,35 @@ def main(dataset_name,
         dropout_rate, hidden_units,
         training_epochs, learning_rate, l2_weight,
         data_seed, net_seed,
-        model_path):
+        model_path, verbose):
     
     # reproducibility
     np.random.seed(data_seed)
     tf.random.set_seed(net_seed)
 
-    print("reading dataset")
+    if verbose > 0: print("reading dataset")
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
     num_classes = len(set(labels))
 
-    print("shuffling dataset")
+    if verbose > 0: print("shuffling dataset")
     features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
     features = normalize_features(features)
     
-    print("obtaining masks")
+    if verbose > 0: print("obtaining masks")
     mask_train, mask_val, mask_test = split(dataset_name, labels)
     y_train = np.multiply(o_h_labels, np.broadcast_to(mask_train.T, o_h_labels.T.shape).T )
     y_val   = np.multiply(o_h_labels, np.broadcast_to(mask_val.T,   o_h_labels.T.shape).T )
     y_test  = np.multiply(o_h_labels, np.broadcast_to(mask_test.T,  o_h_labels.T.shape).T )
 
-    print("calculating adjacency matrix")
+    if verbose > 0: print("calculating adjacency matrix")
     A = adjacency_matrix(neighbors)
-    print("calculating renormalized matrix")
+    if verbose > 0: print("calculating renormalized matrix")
     renormalized_matrix = renormalization_matrix(A)
 
     num_nodes = A.shape[0]
     num_features = len(features[0])
 
-    print("defining model")
+    if verbose > 0: print("defining model")
     model = GCN(renormalized_matrix, num_classes, dropout_rate, hidden_units)
     model.compile(
         loss=lambda y_true, y_pred: masked_loss(y_true, y_pred, 'categorical_crossentropy') + l2_weight * tf.nn.l2_loss(model.trainable_weights[0]), # regularize first layer only
@@ -53,23 +53,23 @@ def main(dataset_name,
         # run_eagerly=True
     )
     model.build(features.shape)
-    model.summary()
+    if verbose > 0: model.summary()
 
-    print("begin training")
+    if verbose > 0: print("begin training")
     callbacks = []
     callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=10, restore_best_weights=True, verbose=1))
     callbacks.append(TensorBoard(log_dir='logs')) #TODO: change dir
     # if model_path is not None:
     #     callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=False, verbose=1))
     # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
-    model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks)
+    model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks, verbose=verbose)
     if model_path is not None:
         model.save_weights(model_path)
 
     y_pred = model.predict(features, len(features))
-    print("validation accuracy:", float(masked_accuracy(y_val, y_pred)))
+    if verbose > 0: print("validation accuracy:", float(masked_accuracy(y_val, y_pred)))
     
-    print("test the model on test set")
+    if verbose > 0: print("test the model on test set")
     loss, accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
     print("accuracy on test: " + str(accuracy))
     
@@ -96,9 +96,12 @@ if __name__ == "__main__":
     # save model to file
     parser.add_argument("-cp", "--checkpoint-path", help="path where to save the weights", default=None)
 
+    # verbose
+    parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)
+
     args = parser.parse_args()
     main(args.dataset,
         args.dropout_rate, args.hidden_units,
         args.epochs, args.learning_rate, args.l2_weight,
         args.data_seed, args.net_seed,
-        args.checkpoint_path)
+        args.checkpoint_path, args.verbose)

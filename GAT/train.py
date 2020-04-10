@@ -56,7 +56,7 @@ def main(dataset_name,
 
     print("test the model on test set")
     test_loss, test_acc = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
-    print("Test loss {:.3f} Train acc {:.3f}" .format( test_loss, test_acc))
+    print("Test acc {:.3f}" .format(test_acc))
 
 
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default='./')
     
     # verbose
-    parser.add_argument("-v", "--verbose", help="useful print", default=1, type=int)
+    parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)
 
     args = parser.parse_args()
     nheads = [int(item) for item in args.nheads.split(',')]

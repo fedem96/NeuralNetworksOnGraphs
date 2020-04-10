@@ -71,7 +71,7 @@ def main(modality, dataset_name,
     test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
 
     t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy, test_loss)
-    print("Test loss {:.3f} Train acc {:.3f}" .format(t_loss, t_acc))
+    print("Test acc {:.3f}" .format(t_acc))
 
 if __name__ == '__main__':
 
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     parser.add_argument("-n2", "--unsupervised-batch-size", help="unsupervised mini-batch size", default=20, type=int)    
     parser.add_argument("-lrs", "--learning-rate-supervised", help="supervised learning rate", default=1e-1, type=float)
     parser.add_argument("-lru", "--learning-rate-unsupervised", help="unsupervised learning rate", default=1e-3, type=float)
-    parser.add_argument("-p", "--patience", help="patience for early stop", default=100, type=int)
+    parser.add_argument("-p", "--patience", help="patience for early stop", default=-1, type=int)
     
     # sampling algorithm (Alg.1) hyper-parameters
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
 
     # verbose
-    parser.add_argument("-v", "--verbose", help="useful print", default=1, type=int)
+    parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)
 
     args = parser.parse_args()
     
