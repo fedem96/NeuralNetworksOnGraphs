@@ -52,11 +52,20 @@ def main(dataset_name,
 
     model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)
 
-    print('\nbest val_acc {:.3f} val_loss {:.3f} \n' .format(es.best_a, es.best_l))
+    # log best performances on train and val set
+    loss, accuracy = model.evaluate(features, y_train, batch_size=len(features), verbose=0)
+    tf.summary.scalar('best_loss', data=loss, step=1)
+    tf.summary.scalar('best_accuracy', data=accuracy, step=1)
 
-    print("test the model on test set")
-    test_loss, test_acc = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
-    print("Test acc {:.3f}" .format(test_acc))
+    v_loss, v_accuracy = model.evaluate(features, y_val, batch_size=len(features), verbose=0)
+    tf.summary.scalar('best_val_loss', data=v_loss, step=1)
+    tf.summary.scalar('best_val_accuracy', data=v_accuracy, step=1)
+    
+    if verbose > 0: print("test the model on test set")
+    t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
+    print("accuracy on test: " + str(t_accuracy))
+    tf.summary.scalar('best_test_loss', data=t_loss, step=1)
+    tf.summary.scalar('best_test_accuracy', data=t_accuracy, step=1)
 
 
 
@@ -84,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
     # save model weights
-    parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default='./')
+    parser.add_argument("-cp", "--checkpoint-path", help="path for model checkpoints", default=None)
     
     # verbose
     parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)

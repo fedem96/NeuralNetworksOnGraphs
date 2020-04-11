@@ -27,8 +27,8 @@
       description: ... # TODO:
       sourcecode: 'nothing'
       steps:
-        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0
-        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0 patience=5000
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0 patience=5000
             
 
 
@@ -81,8 +81,8 @@
       description: ... # TODO:
       sourcecode: 'nothing'
       steps:
-        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
-        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0 patience=5000
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0 patience=5000
    
 
 

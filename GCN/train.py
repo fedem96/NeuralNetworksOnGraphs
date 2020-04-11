@@ -58,7 +58,7 @@ def main(dataset_name,
     if verbose > 0: print("begin training")
     callbacks = []
     callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=10, restore_best_weights=True, verbose=1))
-    callbacks.append(TensorBoard(log_dir='logs')) #TODO: change dir
+    callbacks.append(TensorBoard(log_dir='logs'))
     # if model_path is not None:
     #     callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=False, verbose=1))
     # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
@@ -66,12 +66,20 @@ def main(dataset_name,
     if model_path is not None:
         model.save_weights(model_path)
 
-    y_pred = model.predict(features, len(features))
-    if verbose > 0: print("validation accuracy:", float(masked_accuracy(y_val, y_pred)))
+    # log best performances on train and val set
+    loss, accuracy = model.evaluate(features, y_train, batch_size=len(features), verbose=0)
+    tf.summary.scalar('best_loss', data=loss, step=1)
+    tf.summary.scalar('best_accuracy', data=accuracy, step=1)
+
+    v_loss, v_accuracy = model.evaluate(features, y_val, batch_size=len(features), verbose=0)
+    tf.summary.scalar('best_val_loss', data=v_loss, step=1)
+    tf.summary.scalar('best_val_accuracy', data=v_accuracy, step=1)
     
     if verbose > 0: print("test the model on test set")
-    loss, accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
-    print("accuracy on test: " + str(accuracy))
+    t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
+    print("accuracy on test: " + str(t_accuracy))
+    tf.summary.scalar('best_test_loss', data=t_loss, step=1)
+    tf.summary.scalar('best_test_accuracy', data=t_accuracy, step=1)
     
 
 if __name__ == "__main__":
