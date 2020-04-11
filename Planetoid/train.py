@@ -45,14 +45,14 @@ def main(modality, dataset_name,
     elif modality == "T":
         model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
 
-    L_s = tf.keras.losses.CategoricalCrossentropy("train_loss_s")
+    L_s = tf.keras.losses.CategoricalCrossentropy("bw_loss_s")
     L_u = UnlabeledLoss(unsupervised_batch_size)
 
-    train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="train_acc")
-    val_accuracy = tf.keras.metrics.CategoricalAccuracy(name="val_acc")
-    train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
-    train_loss_u = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
-    val_loss = tf.keras.metrics.Mean('val_loss', dtype=tf.float32)
+    train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_accuracy")
+    val_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_val_accuracy")
+    train_loss = tf.keras.metrics.Mean('bw_loss', dtype=tf.float32)
+    train_loss_u = tf.keras.metrics.Mean('bw_loss_u', dtype=tf.float32)
+    val_loss = tf.keras.metrics.Mean('bw_val_loss', dtype=tf.float32)
 
     optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)   
     optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)      
@@ -67,8 +67,8 @@ def main(modality, dataset_name,
 
     if verbose > 0: print("test the model on test set")
 
-    test_accuracy = tf.keras.metrics.CategoricalAccuracy(name="test_acc")
-    test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
+    test_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_test_accuracy")
+    test_loss = tf.keras.metrics.Mean('bw_test_loss', dtype=tf.float32)
 
     t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy, test_loss)
     print("Test acc {:.3f}" .format(t_acc))

@@ -31,22 +31,18 @@ class GraphConvolution(tf.keras.layers.Layer):
     def build(self, input_shape):
         fin = input_shape[1]
         self.theta = self.add_weight(shape=[fin, self.fout], initializer='glorot_uniform', dtype=tf.float32, name="theta")
-        self.bias = self.add_weight(shape=[self.fout], initializer='zeros', dtype=tf.float32, name="bias")
+        #self.bias = self.add_weight(shape=[self.fout], initializer='zeros', dtype=tf.float32, name="bias")
         self.renormalized_matrix = tf.cast(tf.sparse.SparseTensor(self.coo_mat_indices, self.coo_mat_data, self.coo_mat_shape), tf.float32)
 
     def call(self, x):
         x = tf.cast(x, tf.float32)
-        mx = tf.sparse.sparse_dense_matmul(self.renormalized_matrix, x) # shapes: (n, n)   *   (n, fin)  -> (n, fin)
-        o = tf.matmul(mx, self.theta)                                   # shapes: (n, fin) * (fin, fout) -> (n, fout)
-        o = tf.nn.bias_add(o, self.bias)
+
+        # mx = tf.sparse.sparse_dense_matmul(self.renormalized_matrix, x) # shapes: (n, n)   *   (n, fin)  -> (n, fin)
+        # o = tf.matmul(mx, self.theta)                                   # shapes: (n, fin) * (fin, fout) -> (n, fout)
+        # o = tf.nn.bias_add(o, self.bias)
+        
+        xt = tf.matmul(x, self.theta)                                   # shapes: (n, fin) * (fin, fout) -> (n, fout) 
+        #xt = tf.nn.bias_add(xt, self.bias)
+        o = tf.sparse.sparse_dense_matmul(self.renormalized_matrix, xt) # shapes: (n, n)   *  (n, fout)  -> (n, fout)
+
         return o if self.activation is None else self.activation(o)
-    
-    # def get_config(self):
-    #     base_config = super().get_config()
-    #     config = {
-    #         'coo_mat_indices': self.coo_mat_indices,
-    #         'coo_mat_data': self.coo_mat_data,
-    #         'coo_mat_shape': self.coo_mat_shape,
-    #         'fout': self.fout,
-    #     }
-    #     return dict(list(base_config.items()) + list(config.items()))

@@ -14,7 +14,7 @@ with add_parent_path():
 # TODO: refactor code
 def main(dataset_name,
         dropout_rate, hidden_units,
-        training_epochs, learning_rate, l2_weight,
+        training_epochs, learning_rate, l2_weight, patience,
         data_seed, net_seed,
         model_path, verbose):
     
@@ -57,7 +57,7 @@ def main(dataset_name,
 
     if verbose > 0: print("begin training")
     callbacks = []
-    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=10, verbose=1))
+    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=patience, restore_best_weights=True, verbose=1))
     callbacks.append(TensorBoard(log_dir='logs'))
     if model_path is not None:
         callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=True, verbose=1))
@@ -71,18 +71,20 @@ def main(dataset_name,
 
     # log best performances on train and val set
     loss, accuracy = model.evaluate(features, y_train, batch_size=len(features), verbose=0)
-    tf.summary.scalar('best_loss', data=loss, step=1)
-    tf.summary.scalar('best_accuracy', data=accuracy, step=1)
+    print("accuracy on training: " + str(accuracy))
+    tf.summary.scalar('bw_loss', data=loss, step=1)
+    tf.summary.scalar('bw_accuracy', data=accuracy, step=1)
 
     v_loss, v_accuracy = model.evaluate(features, y_val, batch_size=len(features), verbose=0)
-    tf.summary.scalar('best_val_loss', data=v_loss, step=1)
-    tf.summary.scalar('best_val_accuracy', data=v_accuracy, step=1)
+    print("accuracy on validation: " + str(v_accuracy))
+    tf.summary.scalar('bw_val_loss', data=v_loss, step=1)
+    tf.summary.scalar('bw_val_accuracy', data=v_accuracy, step=1)
     
     if verbose > 0: print("test the model on test set")
     t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
     print("accuracy on test: " + str(t_accuracy))
-    tf.summary.scalar('best_test_loss', data=t_loss, step=1)
-    tf.summary.scalar('best_test_accuracy', data=t_accuracy, step=1)
+    tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
+    tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
     
 
 if __name__ == "__main__":
@@ -96,9 +98,10 @@ if __name__ == "__main__":
     parser.add_argument("-hu", "--hidden-units", help="number of Graph Convolutional filters in the first layer", default=16, type=int)
 
     # optimization hyperparameters
-    parser.add_argument("-e", "--epochs", help="number of training epochs", default=1, type=int)
+    parser.add_argument("-e", "--epochs", help="number of training epochs", default=400, type=int) # 200 epochs in GCN paper
     parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=0.01, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
+    parser.add_argument("-p", "--patience", help="patience for early stop", default=20, type=int) # patience 10 in GCN paper
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
@@ -113,6 +116,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args.dataset,
         args.dropout_rate, args.hidden_units,
-        args.epochs, args.learning_rate, args.l2_weight,
+        args.epochs, args.learning_rate, args.l2_weight, args.patience,
         args.data_seed, args.net_seed,
         args.checkpoint_path, args.verbose)

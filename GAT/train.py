@@ -57,18 +57,20 @@ def main(dataset_name,
 
     # log best performances on train and val set
     loss, accuracy = model.evaluate(features, y_train, batch_size=len(features), verbose=0)
-    tf.summary.scalar('best_loss', data=loss, step=1)
-    tf.summary.scalar('best_accuracy', data=accuracy, step=1)
+    print("accuracy on training: " + str(accuracy))
+    tf.summary.scalar('bw_loss', data=loss, step=1)
+    tf.summary.scalar('bw_accuracy', data=accuracy, step=1)
 
     v_loss, v_accuracy = model.evaluate(features, y_val, batch_size=len(features), verbose=0)
-    tf.summary.scalar('best_val_loss', data=v_loss, step=1)
-    tf.summary.scalar('best_val_accuracy', data=v_accuracy, step=1)
+    print("accuracy on validation: " + str(v_accuracy))
+    tf.summary.scalar('bw_val_loss', data=v_loss, step=1)
+    tf.summary.scalar('bw_val_accuracy', data=v_accuracy, step=1)
     
     if verbose > 0: print("test the model on test set")
     t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
     print("accuracy on test: " + str(t_accuracy))
-    tf.summary.scalar('best_test_loss', data=t_loss, step=1)
-    tf.summary.scalar('best_test_accuracy', data=t_accuracy, step=1)
+    tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
+    tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
 
 
 
