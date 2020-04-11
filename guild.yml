@@ -27,8 +27,8 @@
       description: ... # TODO:
       sourcecode: 'nothing'
       steps:
-        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0 patience=5000
-        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0 patience=5000
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=100000 verbose=0 patience=5000
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=100000 verbose=0 patience=5000
             
 
 
@@ -81,8 +81,8 @@
       description: ... # TODO:
       sourcecode: 'nothing'
       steps:
-        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964q,872,6473] epochs=100000 verbose=0 patience=5000
-        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=100000 verbose=0 patience=5000
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=100000 verbose=0 patience=5000
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=100000 verbose=0 patience=5000
    
 
 
@@ -141,13 +141,13 @@
       description: ... # TODO:
       sourcecode: 'nothing'
       steps:
-        - run: train-citeseer net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-        - run: train-cora     net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-        - run: train-pubmed   net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-        - run: train-citeseer data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-        - run: train-cora     data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-        - run: train-pubmed   data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-                                                                                        # in GCN paper: epochs=200 patience=10
+        - run: train-citeseer net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+        - run: train-cora     net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+        - run: train-pubmed   net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+        - run: train-citeseer data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+        - run: train-cora     data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+        - run: train-pubmed   data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+                                                                                                                                                                                         # in GCN paper: epochs=200 patience=10
 
 
 ########## GCN ##########
@@ -172,9 +172,9 @@
       description: ... # TODO:
       sourcecode: 'nothing'
       steps:
-        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=400 patience=20 verbose=0
-                                                                                                              # in GCN paper: epochs=200 patience=10
+        - run: train dataset=[citeseer,cora,pubmed] net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+        - run: train dataset=[citeseer,cora,pubmed] data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=400 patience=20 verbose=0
+                                                                                                                                                                                                               # in GCN paper: epochs=200 patience=10
 
 
 
@@ -236,9 +236,9 @@
       description: ... # TODO:
       sourcecode: 'nothing'
       steps:
-        - run: train-citeseer net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
-        - run: train-cora     net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
-        - run: train-pubmed   net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
-        - run: train-citeseer data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
-        - run: train-cora     data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
-        - run: train-pubmed   data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473] epochs=1000 verbose=0
+        - run: train-citeseer net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=1000 verbose=0
+        - run: train-cora     net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=1000 verbose=0
+        - run: train-pubmed   net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=1000 verbose=0
+        - run: train-citeseer data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=1000 verbose=0
+        - run: train-cora     data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=1000 verbose=0
+        - run: train-pubmed   data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473,3747,7920,8089,3603,8960,516,2616,2674,7135,728,9493,5414,828,1356,8175,2107,9099,7075,4848,5154] epochs=1000 verbose=0
