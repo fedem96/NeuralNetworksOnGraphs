@@ -55,13 +55,18 @@ def main(dataset_name,
     if verbose > 0: model.summary()
 
     if verbose > 0: print("begin training")
-    es = EarlyStopping  (monitor='val_loss', mode='min', min_delta=0, patience=10, restore_best_weights=True, verbose=1)
-    # mc = ModelCheckpoint(monitor='val_loss', mode='min', save_best_only=True, verbose=1)
-    tb = TensorBoard(log_dir='logs') 
-    # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
-    model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[es, tb], verbose=verbose)
+    callbacks = []
+    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=10, verbose=1))
+    callbacks.append(TensorBoard(log_dir='logs'))
     if model_path is not None:
-        model.save_weights(model_path)
+        callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=True, verbose=1))
+    # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
+    model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks, verbose=verbose)
+    if model_path is not None:
+        model.load_weights(model_path)
+
+    file_writer = tf.summary.create_file_writer("./logs/results/")
+    file_writer.set_as_default()
 
     # log best performances on train and val set
     loss, accuracy = model.evaluate(features, y_train, batch_size=len(features), verbose=0)
