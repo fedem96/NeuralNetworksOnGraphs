@@ -72,6 +72,10 @@ class Planetoid(tf.keras.Model):
 
     def train(self, features, labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, 
         val_accuracy, train_loss, train_loss_u, val_loss, T1, T2, N1, N2, patience, checkpoint_path=None, verbose=1):
+        
+        # logs for train, val accuracy and loss
+        file_writer = tf.summary.create_file_writer("./logs/train/")
+        file_writer.set_as_default()
 
         max_t_acc = 0
         best_weights = None
@@ -79,7 +83,7 @@ class Planetoid(tf.keras.Model):
             ckpt_name = 'Planetoid_ckpts/cp.ckpt'
             checkpoint_path = os.path.join(checkpoint_path, ckpt_name)
 
-        for epoch in range(1, epochs+1):
+        for epoch in tqdm(range(1, epochs+1)):
 
             if verbose > 0: print("Epoch: {:d} ==> ".format(epoch), end=' ')
 
@@ -95,6 +99,13 @@ class Planetoid(tf.keras.Model):
             if val_accuracy.result() > max_t_acc:
                 max_t_acc = val_accuracy.result()
                 best_weights = self.get_weights()
+
+                # write scalars only when acc increases
+                tf.summary.scalar('best_loss', data=train_loss.result(), step=epoch)
+                tf.summary.scalar('best_accuracy', data=train_accuracy.result(), step=epoch)
+                tf.summary.scalar('best_val_loss', data=val_loss.result(), step=epoch)
+                tf.summary.scalar('best_val_accuracy', data=val_accuracy.result(), step=epoch)
+
                 if not checkpoint_path==None: self.save_weights(checkpoint_path)
                 ep_wait = 0
             elif patience > 0:      # patience < 0 means no early stopping
@@ -102,6 +113,14 @@ class Planetoid(tf.keras.Model):
                 if ep_wait >= patience: 
                     if verbose > 0: print("Early stop at epoch {:d}, best val acc {:03f}".format(epoch, max_t_acc))
                     break
+            
+
+            # write scalars only when acc increases
+            tf.summary.scalar('loss', data=train_loss.result(), step=epoch)
+            tf.summary.scalar('masked_accuracy', data=train_accuracy.result(), step=epoch)
+            tf.summary.scalar('val_loss', data=val_loss.result(), step=epoch)
+            tf.summary.scalar('val_masked_accuracy', data=val_accuracy.result(), step=epoch)
+
 
             # Reset metrics every epoch
             train_loss.reset_states()
@@ -118,7 +137,15 @@ class Planetoid(tf.keras.Model):
 
     def test(self, features, labels, mask_test, L_s, test_accuracy, test_loss):
 
+        # logs for train, val accuracy and loss
+        file_writer = tf.summary.create_file_writer("./logs/test/")
+        file_writer.set_as_default()
+
         self.eval(features, labels, mask_test, L_s, test_accuracy, test_loss)
+
+        # write scalars
+        tf.summary.scalar('best_test_loss', data=test_loss.result(), step=1)
+        tf.summary.scalar('best_test_accuracy', data=test_accuracy.result(), step=1)
 
         return test_loss.result(), test_accuracy.result()
 
