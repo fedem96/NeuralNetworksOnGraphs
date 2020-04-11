@@ -52,6 +52,9 @@ def main(dataset_name,
 
     model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)
 
+    file_writer = tf.summary.create_file_writer("./logs/results/")
+    file_writer.set_as_default()
+
     # log best performances on train and val set
     loss, accuracy = model.evaluate(features, y_train, batch_size=len(features), verbose=0)
     tf.summary.scalar('best_loss', data=loss, step=1)

@@ -41,8 +41,6 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
         self.patience = patience
         self.best_weights = None
         self.checkpoint_path = checkpoint_path
-        self.file_writer = tf.summary.create_file_writer("./logs/train/")
-        self.file_writer.set_as_default()
         if not self.checkpoint_path == None:
             ckpt_name = model_name + '_ckpts/cp.ckpt'
             self.checkpoint_path = os.path.join(self.checkpoint_path, ckpt_name)
