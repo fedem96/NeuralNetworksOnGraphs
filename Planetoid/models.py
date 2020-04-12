@@ -101,10 +101,10 @@ class Planetoid(tf.keras.Model):
                 best_weights = self.get_weights()
 
                 # write scalars only when acc increases
-                tf.summary.scalar('best_loss', data=train_loss.result(), step=epoch)
-                tf.summary.scalar('best_accuracy', data=train_accuracy.result(), step=epoch)
-                tf.summary.scalar('best_val_loss', data=val_loss.result(), step=epoch)
-                tf.summary.scalar('best_val_accuracy', data=val_accuracy.result(), step=epoch)
+                tf.summary.scalar('bw_loss', data=train_loss.result(), step=epoch)
+                tf.summary.scalar('bw_accuracy', data=train_accuracy.result(), step=epoch)
+                tf.summary.scalar('bw_val_loss', data=val_loss.result(), step=epoch)
+                tf.summary.scalar('bw_val_accuracy', data=val_accuracy.result(), step=epoch)
 
                 if not checkpoint_path==None: self.save_weights(checkpoint_path)
                 ep_wait = 0
@@ -144,8 +144,8 @@ class Planetoid(tf.keras.Model):
         self.eval(features, labels, mask_test, L_s, test_accuracy, test_loss)
 
         # write scalars
-        tf.summary.scalar('best_test_loss', data=test_loss.result(), step=1)
-        tf.summary.scalar('best_test_accuracy', data=test_accuracy.result(), step=1)
+        tf.summary.scalar('bw_test_loss', data=test_loss.result(), step=1)
+        tf.summary.scalar('bw_test_accuracy', data=test_accuracy.result(), step=1)
 
         return test_loss.result(), test_accuracy.result()
 

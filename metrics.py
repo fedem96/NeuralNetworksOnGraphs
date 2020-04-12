@@ -25,7 +25,7 @@ class UnlabeledLoss(tf.keras.losses.Loss):
         s = tf.reduce_sum(y_pred, axis=1)
         dot_prod = tf.math.multiply(s, y_true)
         # Credits to https://www.tensorflow.org/api_docs/python/tf/math/log_sigmoid tf.nn.softplus(-dot_prod)
-        loss = - tf.reduce_sum(tf.math.log(tf.sigmoid(dot_prod)))
+        loss = - tf.reduce_mean(tf.math.log(tf.sigmoid(dot_prod)))
         return loss
 
 class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):

@@ -51,6 +51,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train GCN')
     parser.add_argument("-p", "--path", help="path to csv result file")
     parser.add_argument("-v", "--value", help="fixed seed value", default=5687, type=int)
-    parser.add_argument("-r", "--runs", help="runs number", default=30, type=int)
+    parser.add_argument("-r", "--runs", help="number of experimental runs", default=30, type=int)
     args = parser.parse_args()
     report_statistics(args.path, args.value, args.runs)
