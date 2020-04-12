@@ -8,13 +8,13 @@ def compute_statistics(df, seed_value):
 
     opt_values = df[df["data-seed"]==seed_value]["bw_test_accuracy"].values
 
-    statistics[0][0] = np.mean(opt_values)
-    statistics[0][1] = np.std(opt_values)
+    statistics[0][0] = np.mean(opt_values) * 100 # transform to percentages
+    statistics[0][1] = np.std(opt_values)  * 100
     
     net_values = df[df["net-seed"]==seed_value]["bw_test_accuracy"].values
 
-    statistics[1][0] = np.mean(net_values)
-    statistics[1][1] = np.std(net_values)
+    statistics[1][0] = np.mean(net_values) * 100
+    statistics[1][1] = np.std(net_values)  * 100
 
     return statistics
 
@@ -30,20 +30,20 @@ def report_statistics(f_path, seed_value, runs):
     pub_values = df[df["dataset"]=="pubmed"].drop(["operation", "dataset"],1)
     st = compute_statistics(pub_values, seed_value)
 
-    print("Pubmed: \n  Optimization seed: {:.2f} ± {:.2f}% " .format(st[0][0]*100, st[0][1]), end=' ')
-    print("Data seed: {:.2f} ± {:.2f}%" .format(st[1][0]*100, st[1][1]))
+    print("Pubmed: \n  Optimization seed: {:.2f} ± {:.2f}% " .format(st[0][0], st[0][1]), end=' ')
+    print("Data seed: {:.2f} ± {:.2f}%" .format(st[1][0], st[1][1]))
 
     cora_values = df[df["dataset"]=="cora"].drop(["operation", "dataset"],1)
     st = compute_statistics(cora_values, seed_value)
 
-    print("Cora: \n  Optimization seed: {:.2f} ± {:.2f}% " .format(st[0][0]*100, st[0][1]), end=' ')
-    print("Data seed: {:.2f} ± {:.2f}%" .format(st[1][0]*100, st[1][1]))
+    print("Cora: \n  Optimization seed: {:.2f} ± {:.2f}% " .format(st[0][0], st[0][1]), end=' ')
+    print("Data seed: {:.2f} ± {:.2f}%" .format(st[1][0], st[1][1]))
 
     cite_values = df[df["dataset"]=="citeseer"].drop(["operation", "dataset"],1)
     st = compute_statistics(cite_values, seed_value)
 
-    print("Citeseer: \n  Optimization seed: {:.2f} ± {:.2f}% " .format(st[0][0]*100, st[0][1]), end=' ')
-    print("Data seed: {:.2f} ± {:.2f}%" .format(st[1][0]*100, st[1][1]))
+    print("Citeseer: \n  Optimization seed: {:.2f} ± {:.2f}% " .format(st[0][0], st[0][1]), end=' ')
+    print("Data seed: {:.2f} ± {:.2f}%" .format(st[1][0], st[1][1]))
     
 
 if __name__ == '__main__':

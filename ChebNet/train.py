@@ -99,10 +99,10 @@ if __name__ == "__main__":
     parser.add_argument("-hu", "--hidden-units", help="number of Chebychev filters in the first layer", default=16, type=int)
 
     # optimization hyperparameters
-    parser.add_argument("-e", "--epochs", help="number of training epochs", default=400, type=int) # 200 epochs in GCN paper
+    parser.add_argument("-e", "--epochs", help="number of training epochs", default=200, type=int)
     parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=0.01, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
-    parser.add_argument("-p", "--patience", help="patience for early stop", default=20, type=int) # patience 10 in GCN paper
+    parser.add_argument("-p", "--patience", help="patience for early stop", default=40, type=int) # patience 10 in GCN paper
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
