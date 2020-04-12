@@ -42,7 +42,7 @@ def main(dataset_name,
     if verbose > 0: print("defining model")
     model = GAT(graph, num_classes, hidden_units, nheads, feat_drop_rate, coefs_drop_rate)
 
-    model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred) + l2_weight * tf.nn.l2_loss(y_true-y_pred), 
+    model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred)+l2_weight*tf.reduce_sum([tf.nn.l2_loss(w) for w in model.weights if not 'bias' in w.name]), 
                     optimizer=optimizer, metrics=[masked_accuracy])
 
 
@@ -65,6 +65,7 @@ def main(dataset_name,
     print("accuracy on validation: " + str(v_accuracy))
     tf.summary.scalar('bw_val_loss', data=v_loss, step=1)
     tf.summary.scalar('bw_val_accuracy', data=v_accuracy, step=1)
+    tf.summary.scalar('bw_epoch', data=es.stopped_epoch, step=1)
     
     if verbose > 0: print("test the model on test set")
     t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)

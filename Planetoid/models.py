@@ -56,13 +56,13 @@ class Planetoid(tf.keras.Model):
     def labeled_batch(self, features, labels, mask_train, N1):
         """ Generate mini-batch for labeled nodes """
         while True:
-            perm = np.random.permutation(len(features[mask_train]))
+            perm = np.array(np.random.permutation(len(features[mask_train])), dtype=np.int32)
             j = 0
             while j < len(mask_train):
                 k = min(len(mask_train), j+N1)
                 b_x = features[perm[j:k]]
                 b_y = labels[perm[j:k]]
-                yield np.array(b_x, dtype=np.float32), np.array(b_y, dtype=np.float32), np.array(perm[j:k], dtype=np.int32)
+                yield np.array(b_x, dtype=np.float32), np.array(b_y, dtype=np.float32), perm[j:k]
                 j = k
 
     def compute_iters(self, it):
@@ -103,6 +103,7 @@ class Planetoid(tf.keras.Model):
                 # write scalars only when acc increases
                 tf.summary.scalar('bw_loss', data=train_loss.result(), step=epoch)
                 tf.summary.scalar('bw_accuracy', data=train_accuracy.result(), step=epoch)
+                tf.summary.scalar('bw_epoch', data=epoch, step=epoch)
                 tf.summary.scalar('bw_val_loss', data=val_loss.result(), step=epoch)
                 tf.summary.scalar('bw_val_accuracy', data=val_accuracy.result(), step=epoch)
 
@@ -203,7 +204,6 @@ class Planetoid_T(Planetoid):
             emb_c = self.emb_cont(inputs[:, 1])
 
             out = tf.multiply(emb_i, emb_c)
-            return out
 
     def context_batch(self, N2):
         """ Algorithm 1: Sampling graph context (with negative sample) """
@@ -332,8 +332,6 @@ class Planetoid_I(Planetoid):
                 context_b_x, context_b_y = [], []
                 k = min(len(perm), j+N2)
                 for n in perm[j:k]:
-                    # if mask_test[n]:
-                    #     continue    # aka test node
                     i, c, gamma = self.sample_context(n, perm)
                     context_b_x.append([i, c])
                     context_b_y.append(gamma)

@@ -24,8 +24,7 @@ class UnlabeledLoss(tf.keras.losses.Loss):
     def call(self, y_true, y_pred):
         s = tf.reduce_sum(y_pred, axis=1)
         dot_prod = tf.math.multiply(s, y_true)
-        # Credits to https://www.tensorflow.org/api_docs/python/tf/math/log_sigmoid tf.nn.softplus(-dot_prod)
-        loss = - tf.reduce_mean(tf.math.log(tf.sigmoid(dot_prod)))
+        loss = - tf.reduce_sum(tf.math.log(tf.sigmoid(dot_prod)))
         return loss
 
 class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
@@ -54,11 +53,10 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         current_l = logs.get('val_loss')
         current_a = logs.get('val_masked_accuracy')
-        if np.less(current_l, self.best_l) or np.greater(current_a, self.best_a):
-            if np.less(current_l, self.best_l) and np.greater(current_a, self.best_a):
-                self.best_weights = self.model.get_weights()
-                if not self.checkpoint_path == None:
-                    self.model.save_weights(self.checkpoint_path)
+        if current_l < self.best_l or current_a > self.best_a:
+            self.best_weights = self.model.get_weights()
+            if not self.checkpoint_path == None:
+                self.model.save_weights(self.checkpoint_path)
             self.best_l = min(self.best_l, current_l)
             self.best_a = max(self.best_a, current_a)
             self.wait = 0
