@@ -181,13 +181,12 @@ class Planetoid_T(Planetoid):
         """
         if modality == "s":
             # freeze embedding during label classification
-            self.emb_cont.trainable = self.emb_ist.trainable = False        
+            self.emb_cont.trainable = False        
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True
 
             h_f = self.h_k(inputs[0])
 
             embs = self.emb_ist(inputs[1])
-            embs = self.emb_cont(inputs[1])
             h_e = self.h_l(embs)
 
             h_node = tf.keras.layers.concatenate([h_f, h_e])
@@ -204,6 +203,8 @@ class Planetoid_T(Planetoid):
             emb_c = self.emb_cont(inputs[:, 1])
 
             out = tf.multiply(emb_i, emb_c)
+
+            return out
 
     def context_batch(self, N2):
         """ Algorithm 1: Sampling graph context (with negative sample) """
