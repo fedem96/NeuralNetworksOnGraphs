@@ -23,24 +23,24 @@ class Planetoid(tf.keras.Model):
     def sample_context(self, node, perm):
         """ Algorithm 1: Sample graph context for one node """
         random = np.random.random()
+        ist = []
+        cont = []
 
-        gamma = 1 if random < self.r1 else -1
+        gamma = -1 if random < self.r1 else 1
         if random < self.r2:
             # random walk from S of length q
             random_walk = [node]
             for _ in range(self.q):
-                el = self.A[random_walk[-1]].indices
-                count = len(self.A[random_walk[-1]].indices)
-                if count == 0: continue # the last node in random walk has not any neighbors in perm
                 random_walk.append(np.random.choice(self.A[random_walk[-1]].indices))
 
-            i = np.random.randint(0, len(random_walk))
-            if gamma == 1:
-                c = np.random.choice(
-                    random_walk[max(0, i-self.d):min(i+self.d+1, len(random_walk))])
-            elif gamma == -1:
-                c = np.random.choice(perm)
-            i = random_walk[i]
+            for i in range(len(random_walk)):
+                if gamma == 1:
+                    c = np.random.choice(
+                        random_walk[max(0, i-self.d):min(i+self.d+1, len(random_walk))])
+                elif gamma == -1:
+                    c = np.random.choice(perm)
+                ist.append([random_walk[i]])
+                cont.append([c])
         else:
             if gamma == 1:
                 i, c = np.random.choice(perm, 2)
@@ -50,8 +50,10 @@ class Planetoid(tf.keras.Model):
                 i, c = np.random.choice(perm, 2)
                 while (self.labels[i] == self.labels[c]).all():
                     c = np.random.choice(perm)
-            
-        return i, c, gamma
+            ist.append([i])
+            cont.append([c])
+
+        return ist, cont, gamma
 
     def labeled_batch(self, features, labels, mask_train, N1):
         """ Generate mini-batch for labeled nodes """
@@ -163,15 +165,19 @@ class Planetoid_T(Planetoid):
 
         # Embedding layers for graph context
         self.emb_ist = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
-        self.emb_cont = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
+
+        if self.r1 > 0:
+            # negative sample embedding
+            self.emb_cont = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
+        else:
+            # graph context with all nodes
+            self.emb_cont = tf.keras.layers.Dense(self.features_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Hidden embedding representations
-        self.h_l = tf.keras.layers.Dense(
-            self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Output layer after concatenation
-        self.pred_layer = tf.keras.layers.Dense(
-            self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.pred_layer = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
     def call(self, inputs, modality="s"):
         """ 
@@ -200,9 +206,11 @@ class Planetoid_T(Planetoid):
             self.emb_cont.trainable = True
 
             emb_i = self.emb_ist(inputs[:, 0])
-            emb_c = self.emb_cont(inputs[:, 1])
-
-            out = tf.multiply(emb_i, emb_c)
+            if self.r1 > 0:
+                emb_c = self.emb_cont(inputs[:, 1])
+                out = tf.multiply(emb_i, emb_c)
+            else: 
+                out = self.emb_cont(emb_i)
 
             return out
 
@@ -212,14 +220,17 @@ class Planetoid_T(Planetoid):
             perm = np.random.permutation(self.features_size)
             j = 0
             while j < len(perm):
-                context_b_x, context_b_y = [], []
                 k = min(len(perm), j+N2)
-                for n in perm[j:k]:
+                for idx,n in enumerate(perm[j:k]):
                     i, c, gamma = self.sample_context(n, perm)
-                    context_b_x.append([i, c])
-                    context_b_y.append(gamma)
+                    if idx == 0:
+                        context_b_x = np.concatenate((i,c),-1)
+                        context_b_y = gamma
+                    else:
+                        context_b_x = np.vstack((context_b_x, np.concatenate((i,c),-1)))
+                        context_b_y = np.vstack((context_b_y,gamma))
 
-                yield np.array(context_b_x, dtype=np.int32), np.array(context_b_y, dtype=np.int32)
+                yield np.array(context_b_x, dtype=np.int32), np.array(context_b_y, dtype=np.float32)
                 j = k
     
     def train_step(self, features, labels, mask_train, mask_test, L_s, L_u, optimizer_u, optimizer_s,
@@ -241,7 +252,8 @@ class Planetoid_T(Planetoid):
             b_x, b_y = next(self.context_batch(N2))
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
-                loss_u = L_u(b_y, out)
+                target = b_y if self.r1>0 else b_x[:,1]
+                loss_u = L_u(target, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
@@ -253,7 +265,8 @@ class Planetoid_T(Planetoid):
             b_x, b_y = next(self.context_batch(N2))
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
-                loss_u = L_u(b_y, out)
+                target = b_y if self.r1>0 else b_x[:,1]
+                loss_u = L_u(target, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
             train_loss_u(loss_u)
@@ -271,8 +284,10 @@ class Planetoid_T(Planetoid):
 class Planetoid_I(Planetoid):
     """ Planetoid inductive """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, mask_test, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.size_valid_ind = len(np.where(mask_test==False)[0])
 
         # Hidden features representations
         self.h_k = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
@@ -280,8 +295,12 @@ class Planetoid_I(Planetoid):
         # Parametric Embedding for graph context
         self.par_embedding = tf.keras.layers.Dense(self.embedding_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
         
-        # Embedding for graph context
-        self.embedding = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
+        if self.r1 > 0:
+            # negative sample embedding
+            self.emb_cont = tf.keras.layers.Embedding(self.features_size, self.embedding_size)
+        else:
+            # graph context with all nodes
+            self.emb_cont = tf.keras.layers.Dense(self.size_valid_ind, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Hidden embedding representations
         self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
@@ -297,7 +316,7 @@ class Planetoid_I(Planetoid):
         """
         if modality == "s":
             # freeze embedding graph context layer
-            self.embedding.trainable = False
+            self.emb_cont.trainable = False
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True 
 
             h_f = self.h_k(inputs)
@@ -314,20 +333,22 @@ class Planetoid_I(Planetoid):
         elif modality == "u":
             # freeze some layers 
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = False
-            self.embedding.trainable = True
+            self.emb_cont.trainable = True
 
             emb_i = self.par_embedding(inputs[0])
-            emb_c = self.embedding(inputs[1])
-
-            out = tf.multiply(emb_i, emb_c)
+            if self.r1 > 0:
+                # negative sample
+                emb_c = self.emb_cont(inputs[1])
+                out = tf.multiply(emb_i, emb_c)
+            else:
+                out = self.emb_cont(emb_i)
 
             return out
 
     def context_batch(self, features, mask_test, N2):
         """ Algorithm 1: Sampling graph context (with negative sample) """
         while True:
-            size_valid_ind = len(np.where(mask_test==False)[0])
-            perm = np.random.permutation(size_valid_ind)
+            perm = np.random.permutation(self.size_valid_ind)
             j = 0
             while j < len(perm):
                 context_b_x, context_b_y = [], []
@@ -360,7 +381,8 @@ class Planetoid_I(Planetoid):
             b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2))
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
-                loss_u = L_u(b_y, out)
+                target = b_y if self.r1>0 else b_c
+                loss_u = L_u(target, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
@@ -372,7 +394,8 @@ class Planetoid_I(Planetoid):
             b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2))
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
-                loss_u = L_u(b_y, out)
+                target = b_y if self.r1>0 else b_c
+                loss_u = L_u(target, out)
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
             train_loss_u(loss_u)
@@ -384,5 +407,3 @@ class Planetoid_I(Planetoid):
 
         test_loss(loss)
         test_accuracy(labels[mask], predictions)
-
-

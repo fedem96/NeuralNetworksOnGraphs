@@ -41,12 +41,15 @@ def main(modality, dataset_name,
 
     # Define model, loss, metrics and optimizers
     if modality == "I":
-        model = Planetoid_I(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
+        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
     elif modality == "T":
         model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
 
-    L_s = tf.keras.losses.CategoricalCrossentropy("bw_loss_s")
-    L_u = UnlabeledLoss(unsupervised_batch_size)
+    L_s = tf.keras.losses.CategoricalCrossentropy("loss_s")
+    if neg_sample > 0:
+        L_u = UnlabeledLoss(unsupervised_batch_size)
+    else:
+        L_u = tf.keras.losses.SparseCategoricalCrossentropy("loss_u")
 
     train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_accuracy")
     val_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_val_accuracy")
@@ -78,7 +81,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Planetoid')
 
     # modality can be I inductive T transductive
-    parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
+    parser.add_argument("-m", "--modality", help="model to use", default="T", choices=["I", "T"])
     
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="pubmed", choices=["citeseer", "cora", "pubmed"])
@@ -100,7 +103,7 @@ if __name__ == '__main__':
     # sampling algorithm (Alg.1) hyper-parameters
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
     parser.add_argument("-w", "--window-size", help="window size", default=3, type=int)
-    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=5/6, type=float)
+    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=0, type=float)
     parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=0.038, type=float)
 
     # reproducibility
