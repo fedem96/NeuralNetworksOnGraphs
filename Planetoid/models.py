@@ -72,7 +72,7 @@ class Planetoid(tf.keras.Model):
         g1 = []
         gy = []
 
-        if it >= 2000:
+        if it >= 10000:
             random_walk = [node]
             for _ in range(self.q):
                 random_walk.append(np.random.choice(self.A[random_walk[-1]].indices))
@@ -349,7 +349,7 @@ class Planetoid_I(Planetoid):
         self.size_valid_ind = len(np.where(mask_test==False)[0])
 
         # Hidden features representations
-        self.h_k = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.h_k = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Parametric Embedding for graph context
         self.par_embedding = tf.keras.layers.Dense(self.embedding_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
@@ -362,7 +362,7 @@ class Planetoid_I(Planetoid):
             self.emb_cont = tf.keras.layers.Dense(self.size_valid_ind, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Hidden embedding representations
-        self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.relu, kernel_initializer=tf.keras.initializers.GlorotUniform)
+        self.h_l = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
         # Output layer after concatenation
         self.pred_layer = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
