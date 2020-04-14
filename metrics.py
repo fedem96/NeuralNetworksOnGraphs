@@ -72,3 +72,65 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
         if self.stopped_epoch > 0:
             print('Early stop at epoch {:d} with best val_acc {:.3f} val_loss {:.3f}' .format(self.stopped_epoch,
                                                                                        self.best_a, self.best_l))
+
+class EarlyStoppingAvg(tf.keras.callbacks.Callback):
+    """Stop training only when loss does not improve over the mean of a fixed-size sliding window
+
+    Arguments:
+        patience: size of the sliding window (number of epochs)
+    """
+
+    def __init__(self, monitor='val_loss', min_delta=0, patience=0, verbose=0, mode='auto', restore_best_weights=False):
+        super(EarlyStoppingAvg, self).__init__()
+        self.patience = patience
+        self.monitor = monitor
+        self.min_delta = min_delta
+        self.verbose = verbose
+        self.restore_best_weights = restore_best_weights
+
+        if mode == 'auto':
+            if 'acc' in monitor:
+                self.mode = 'max'
+            else:
+                self.mode = 'min'
+        else:
+            assert mode in ['min', 'max']
+            self.mode = mode
+
+    def on_train_begin(self, logs=None):
+        self.window = []
+        self.stopped_epoch = 0
+        self.best = np.Inf
+        self.best_weights = None
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.last = logs.get(self.monitor)
+        if self.mode == 'max': self.last = -self.last
+
+        if self.window == []:
+            self.window = [self.last]
+            if self.restore_best_weights:
+                self.best_weights = self.model.get_weights()
+            return
+
+        if self.last > np.mean(self.window) + self.min_delta and (self.patience <= 0 or len(self.window) == self.patience):
+            self.model.stop_training = True
+            self.stopped_epoch = epoch
+        else:
+            self.window.append(self.last)
+            if len(self.window) > self.patience:
+                self.window.pop(0)
+
+        if self.last < self.best:
+            self.best = self.last
+            if self.restore_best_weights:
+                self.best_weights = self.model.get_weights()
+
+    def on_train_end(self, logs=None):
+        if self.stopped_epoch > 0:
+            if self.restore_best_weights:
+                self.model.set_weights(self.best_weights)
+
+            if self.mode == 'max': self.last = -self.last
+            if self.mode == 'max': self.best = -self.best
+            print('Early stop at epoch {:d} with best {} {:.3f}, last {:.3f}' .format(self.stopped_epoch, self.monitor, self.best, self.last))

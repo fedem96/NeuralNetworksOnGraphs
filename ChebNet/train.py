@@ -66,10 +66,10 @@ def main(dataset_name, yang_splits,
 
     if verbose > 0: print("begin training")
     callbacks = []
-    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', min_delta=0, patience=patience, restore_best_weights=True, verbose=1))
+    callbacks.append(EarlyStoppingAvg(monitor='val_loss', mode='min', min_delta=0, patience=patience, restore_best_weights=True, verbose=verbose))
     callbacks.append(TensorBoard(log_dir='logs'))
     if model_path is not None:
-        callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=True, verbose=1))
+        callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=True, verbose=verbose))
     # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
     model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks, verbose=verbose)
     if model_path is not None:
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--epochs", help="number of training epochs", default=200, type=int)
     parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=0.01, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
-    parser.add_argument("-p", "--patience", help="patience for early stop", default=40, type=int) # patience 10 in GCN paper
+    parser.add_argument("-p", "--patience", help="patience for early stop", default=10, type=int)
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
