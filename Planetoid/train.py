@@ -11,7 +11,7 @@ with add_parent_path():
     from utils import *
 
 
-def main(modality, dataset_name, 
+def main(modality, dataset_name, yang_splits,
         embedding_dim, epochs, pretrain_batch,
         supervised_batch, unsupervised_batch, supervised_batch_size,
         unsupervised_batch_size, learning_rate_supervised, 
@@ -26,18 +26,22 @@ def main(modality, dataset_name,
     np.random.seed(data_seed)
     tf.random.set_seed(net_seed)
 
-    if verbose > 0: print("reading dataset")
-    features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
-    num_classes = len(set(labels))
+    if yang_splits:
+        features, o_h_labels, A, mask_train, mask_val, mask_test = read_dataset(dataset_name, yang_splits=True)
+    else:
+        if verbose > 0: print("reading dataset")
+        features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
 
-    if verbose > 0: print("shuffling dataset")
-    features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
-    
-    if verbose > 0: print("obtaining masks")
-    mask_train, mask_val, mask_test = split(dataset_name, labels)
+        if verbose > 0: print("shuffling dataset")
+        features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
+        
+        if verbose > 0: print("obtaining masks")
+        mask_train, mask_val, mask_test = split(dataset_name, labels)
 
-    if verbose > 0: print("calculating adjacency matrix")
-    A = adjacency_matrix(neighbors)
+        if verbose > 0: print("calculating adjacency matrix")
+        A = adjacency_matrix(neighbors)
+
+    num_classes = get_num_classes(dataset_name)
 
     # Define model, loss, metrics and optimizers
     if modality == "I":
@@ -85,6 +89,7 @@ if __name__ == '__main__':
     
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="pubmed", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
     
     # network hyperparameters
     parser.add_argument("-emb", "--embedding-dim", help="node embedding size", default=50, type=int)
@@ -118,7 +123,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    main(args.modality, args.dataset, 
+    main(args.modality, args.dataset, args.yang_splits,
         args.embedding_dim, args.epochs, args.pretrain_batch,
         args.supervised_batch, args.unsupervised_batch, args.supervised_batch_size,
         args.unsupervised_batch_size, args.learning_rate_supervised, 

@@ -11,7 +11,7 @@ with add_parent_path():
     from metrics import masked_accuracy, masked_loss, EarlyStoppingAccLoss
     from utils import *
 
-def main(dataset_name, 
+def main(dataset_name, yang_splits,
         nheads, hidden_units, feat_drop_rate, coefs_drop_rate,
         epochs, learning_rate, l2_weight, patience, 
         data_seed, net_seed, checkpoint_path, verbose):
@@ -20,22 +20,28 @@ def main(dataset_name,
     np.random.seed(data_seed)
     tf.random.set_seed(net_seed)
 
-    if verbose > 0: print("reading dataset")
-    features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
-    num_classes = len(set(labels))
+    if yang_splits:
+        features, o_h_labels, graph, mask_train, mask_val, mask_test = read_dataset(dataset_name, yang_splits=True)
+    else:
+        if verbose > 0: print("reading dataset")
+        features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
+        num_classes = len(set(labels))
 
-    if verbose > 0: print("shuffling dataset")
-    features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
+        if verbose > 0: print("shuffling dataset")
+        features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
+        
+        if verbose > 0: print("obtaining masks")
+        mask_train, mask_val, mask_test = split(dataset_name, labels)
+
+        if verbose > 0: print("calculating adjacency matrix")
+        graph = adjacency_matrix(neighbors)
+
+    num_classes = get_num_classes(dataset_name)
     features = normalize_features(features)
-    
-    if verbose > 0: print("obtaining masks")
-    mask_train, mask_val, mask_test = split(dataset_name, labels)
+
     y_train = np.multiply(o_h_labels, np.broadcast_to(mask_train.T, o_h_labels.T.shape).T )
     y_val   = np.multiply(o_h_labels, np.broadcast_to(mask_val.T,   o_h_labels.T.shape).T )
     y_test  = np.multiply(o_h_labels, np.broadcast_to(mask_test.T,  o_h_labels.T.shape).T )
-
-    if verbose > 0: print("calculating adjacency matrix")
-    graph = adjacency_matrix(neighbors)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
@@ -81,6 +87,7 @@ if __name__ == '__main__':
 
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
     
     # network hyperparameters
     parser.add_argument('-nh', '--nheads', help='heads number per layer (the len of the list represent the model layers number)', default='8,1')
@@ -107,7 +114,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     nheads = [int(item) for item in args.nheads.split(',')]
     
-    main(args.dataset, 
+    main(args.dataset, args.yang_splits,
         nheads, args.hidden_units, args.feat_drop_rate, args.coefs_drop_rate,
         args.epochs, args.learning_rate, args.l2_weight, args.patience, 
         args.data_seed, args.net_seed, args.checkpoint_path, args.verbose)
