@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import scipy.sparse as sp
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
@@ -10,6 +11,7 @@ from models import GAT
 with add_parent_path():
     from metrics import masked_accuracy, masked_loss, EarlyStoppingAccLoss
     from utils import *
+
 
 def main(dataset_name, yang_splits,
         nheads, hidden_units, feat_drop_rate, coefs_drop_rate,
@@ -34,8 +36,10 @@ def main(dataset_name, yang_splits,
         mask_train, mask_val, mask_test = split(dataset_name, labels)
 
         if verbose > 0: print("calculating adjacency matrix")
-        graph = adjacency_matrix(neighbors, self_loop=True)
+        graph = adjacency_matrix(neighbors, self_loops=True)
 
+    # add self loops to adj matrix
+    graph = graph + sp.eye(graph.shape[0])
     num_classes = get_num_classes(dataset_name)
     features = normalize_features(features)
 
@@ -54,7 +58,8 @@ def main(dataset_name, yang_splits,
 
     if verbose > 0: print("begin training")    
     tb = TensorBoard(log_dir='logs')
-    es = EarlyStoppingAccLoss(patience, checkpoint_path, 'GAT')
+    monitor = 'acc_loss' if dataset_name=='cora' else 'acc'
+    es = EarlyStoppingAccLoss(patience, monitor, checkpoint_path, 'GAT')
 
     model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)
 

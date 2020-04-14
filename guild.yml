@@ -23,7 +23,15 @@
         checkpoint-path:
           required: True
 
-    evaluate:
+    evaluate10:
+      description: ... # TODO:
+      sourcecode: 'Planetoid/*.py'
+      steps:
+        - run: train dataset=[citeseer,cora,pubmed] epochs=100000 patience=5000 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train dataset=[citeseer,cora,pubmed] epochs=100000 patience=5000 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+   
+
+    evaluate100:
       description: ... # TODO:
       sourcecode: 'Planetoid/*.py'
       steps:
@@ -77,7 +85,14 @@
         checkpoint-path:
           required: True
 
-    evaluate:
+    evaluate10:
+      description: ... # TODO:
+      sourcecode: 'Planetoid/*.py'
+      steps:
+        - run: train dataset=[citeseer,cora,pubmed] epochs=100000 patience=5000 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train dataset=[citeseer,cora,pubmed] epochs=100000 patience=5000 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+   
+    evaluate100:
       description: ... # TODO:
       sourcecode: 'Planetoid/*.py'
       steps:
@@ -137,7 +152,19 @@
       sourcecode: 'nothing'
       flags-dest: args
 
-    evaluate:
+    evaluate10:
+      description: ... # TODO:
+      sourcecode: 'ChebNet/*.py'
+      steps:
+        - run: train-citeseer patience=40 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     patience=40 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   patience=40 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-citeseer patience=40 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     patience=40 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   patience=40 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+              # in GCN paper: patience=10
+
+    evaluate100:
       description: ... # TODO:
       sourcecode: 'ChebNet/*.py'
       steps:
@@ -168,7 +195,15 @@
       sourcecode: 'nothing'
       flags-dest: args
 
-    evaluate:
+    evaluate10:
+      description: ... # TODO:
+      sourcecode: 'GCN/*.py'
+      steps:
+        - run: train dataset=[citeseer,cora,pubmed] patience=40 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train dataset=[citeseer,cora,pubmed] patience=40 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+                                    # in GCN paper: patience=10
+
+    evaluate100:
       description: ... # TODO:
       sourcecode: 'GCN/*.py'
       steps:
@@ -231,8 +266,19 @@
       flags:
         checkpoint-path:
           required: True
-
-    evaluate:
+    
+    evaluate10:
+      description: ... # TODO:
+      sourcecode: 'GAT/*.py'
+      steps:
+        - run: train-citeseer epochs=1000 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     epochs=1000 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   epochs=1000 verbose=0 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-citeseer epochs=1000 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-cora     epochs=1000 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   epochs=1000 verbose=0 data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+ 
+    evaluate100:
       description: ... # TODO:
       sourcecode: 'GAT/*.py'
       steps:

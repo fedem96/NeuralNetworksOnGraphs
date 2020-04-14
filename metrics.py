@@ -34,10 +34,11 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
         patience: Number of epochs to wait before the stop.
     """
 
-    def __init__(self, patience=0, checkpoint_path=None, model_name=''):
+    def __init__(self, patience=0, monitor="loss_acc", checkpoint_path=None, model_name=''):
         super(EarlyStoppingAccLoss, self).__init__()
 
         self.patience = patience
+        self.monitor_name = monitor
         self.best_weights = None
         self.checkpoint_path = checkpoint_path
         if not self.checkpoint_path == None:
@@ -53,8 +54,7 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         current_l = logs.get('val_loss')
         current_a = logs.get('val_masked_accuracy')
-        # if current_l < self.best_l or current_a > self.best_a:
-        if current_a >= self.best_a:
+        if (current_a >= self.best_a and 'acc' in self.monitor_name) or (current_l <= self.best_l and 'loss' in self.monitor_name):
             self.best_weights = self.model.get_weights()
             if not self.checkpoint_path == None:
                 self.model.save_weights(self.checkpoint_path)   
