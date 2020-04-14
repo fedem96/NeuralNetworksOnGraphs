@@ -12,7 +12,7 @@ with add_parent_path():
 
 
 # TODO: refactor code
-def main(dataset_name,
+def main(dataset_name, yang_splits,
         dropout_rate, hidden_units,
         training_epochs, learning_rate, l2_weight, patience,
         data_seed, net_seed,
@@ -22,22 +22,28 @@ def main(dataset_name,
     np.random.seed(data_seed)
     tf.random.set_seed(net_seed)
 
-    if verbose > 0: print("reading dataset")
-    features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
-    num_classes = len(set(labels))
+    if yang_splits:
+        features, o_h_labels, A, mask_train, mask_val, mask_test = read_dataset(dataset_name, yang_splits=True)
+    else:
+        if verbose > 0: print("reading dataset")
+        features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
 
-    if verbose > 0: print("shuffling dataset")
-    features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
+        if verbose > 0: print("shuffling dataset")
+        features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
+        
+        if verbose > 0: print("obtaining masks")
+        mask_train, mask_val, mask_test = split(dataset_name, labels)
+
+        if verbose > 0: print("calculating adjacency matrix")
+        A = adjacency_matrix(neighbors)
+
+    num_classes = get_num_classes(dataset_name)
     features = normalize_features(features)
-    
-    if verbose > 0: print("obtaining masks")
-    mask_train, mask_val, mask_test = split(dataset_name, labels)
+
     y_train = np.multiply(o_h_labels, np.broadcast_to(mask_train.T, o_h_labels.T.shape).T )
     y_val   = np.multiply(o_h_labels, np.broadcast_to(mask_val.T,   o_h_labels.T.shape).T )
     y_test  = np.multiply(o_h_labels, np.broadcast_to(mask_test.T,  o_h_labels.T.shape).T )
 
-    if verbose > 0: print("calculating adjacency matrix")
-    A = adjacency_matrix(neighbors)
     if verbose > 0: print("calculating renormalized matrix")
     renormalized_matrix = renormalization_matrix(A)
 
@@ -93,6 +99,7 @@ if __name__ == "__main__":
 
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
 
     # network hyperparameters
     parser.add_argument("-dr", "--dropout-rate", help="dropout rate for dropout layers (fraction of the input units to drop)", default=0.5, type=float)
@@ -115,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)
 
     args = parser.parse_args()
-    main(args.dataset,
+    main(args.dataset, args.yang_splits,
         args.dropout_rate, args.hidden_units,
         args.epochs, args.learning_rate, args.l2_weight, args.patience,
         args.data_seed, args.net_seed,

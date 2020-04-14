@@ -1,5 +1,6 @@
-import os
-import csv
+import csv, os, pickle as pkl, sys
+
+import networkx as nx
 import numpy as np
 import scipy.sparse as sparse
 from scipy.sparse.linalg import eigs
@@ -8,7 +9,10 @@ DIR_NAME = os.path.dirname(os.path.realpath(__file__))
 data = DIR_NAME + '/data'
 
 
-def read_dataset(dataset):
+def read_dataset(dataset, yang_splits=False):
+    if yang_splits:
+        return read_dataset_yang_splits(dataset)
+
     print("reading " + dataset + " dataset")
     if "pubmed" in dataset:
         return read_p(dataset)
@@ -131,7 +135,7 @@ def one_hot_enc(n_classes, labels):
         o_h_label[label] = 1
         o_h_labels.append(o_h_label)
 
-    return np.array(o_h_labels)
+    return np.array(o_h_labels).astype(np.int32)
 
 
 def permute(features, neighbors, labels, o_h_labels, keys):
@@ -191,7 +195,7 @@ def split(dataset, labels):
 
     return mask_train, mask_val, mask_test
 
-def adjacency_matrix(neighbors, self_loops=False):
+def adjacency_matrix(neighbors, self_loops=False, weighted=False):
     num_nodes = len(neighbors)
     row_ind = []
     col_ind = []
@@ -202,10 +206,11 @@ def adjacency_matrix(neighbors, self_loops=False):
             row_ind.append(n); col_ind.append(n); values.append(1)
         for edge in adjacency_list:
             neighbor = edge[0]
-            weight = edge[1]
+            weight = edge[1] if weighted else 1
             row_ind.append(n); col_ind.append(neighbor); values.append(weight)
             row_ind.append(neighbor); col_ind.append(n); values.append(weight)
             # the adjacency matrix must se symmetric
+            
             # TODO: symmetrize non-DAGs (i.e. treat the case of two edges between a pair of nodes)
 
     return sparse.csr_matrix((values, (row_ind, col_ind)), shape=[num_nodes, num_nodes])
@@ -238,14 +243,76 @@ def renormalization_matrix(A):
     renormalized_matrix = renorm_D_minus_half.dot(A).dot(renorm_D_minus_half)
     return renormalized_matrix
 
-def main():
-    dataset = "pubmed"
-    np.random.seed(0)
+def parse_index_file(filename): # directly from GCN Github code
+    """Parse index file."""
+    index = []
+    for line in open(filename):
+        index.append(int(line.strip()))
+    return index
 
-    features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
-    features = normalize_features(features)
-    permute(features, neighbors, labels, o_h_labels, keys)
-    train_idx, val_idx, test_idx = split(dataset, labels)
+def sample_mask(idx, l): # directly from GCN Github code
+    """Create mask."""
+    mask = np.zeros(l)
+    mask[idx] = 1
+    return np.array(mask, dtype=np.bool)
+
+def read_dataset_yang_splits(dataset):  # adapted from GCN Github code
+    print("reading " + dataset + " dataset with Yang splits")
+    data_folder = os.path.join("data", "yang_splits")
+    names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
+    objects = []
+    for i in range(len(names)):
+        with open(os.path.join(data_folder, "ind.{}.{}".format(dataset, names[i])), 'rb') as f:
+            if sys.version_info > (3, 0):
+                objects.append(pkl.load(f, encoding='latin1'))
+            else:
+                objects.append(pkl.load(f))
+
+    x, y, tx, ty, allx, ally, graph = tuple(objects)
+    test_idx_reorder = parse_index_file(os.path.join(data_folder, "ind.{}.test.index".format(dataset)))
+    test_idx_range = np.sort(test_idx_reorder)
+
+    if dataset == 'citeseer':
+        # Fix citeseer dataset (there are some isolated nodes in the graph)
+        # Find isolated nodes, add them as zero-vecs into the right position
+        test_idx_range_full = range(min(test_idx_reorder), max(test_idx_reorder)+1)
+        tx_extended = sparse.lil_matrix((len(test_idx_range_full), x.shape[1]))
+        tx_extended[test_idx_range-min(test_idx_range), :] = tx
+        tx = tx_extended
+        ty_extended = np.zeros((len(test_idx_range_full), y.shape[1]))
+        ty_extended[test_idx_range-min(test_idx_range), :] = ty
+        ty = ty_extended
+
+    features = sparse.vstack((allx, tx)).astype(np.float32).toarray()
+    features[test_idx_reorder, :] = features[test_idx_range, :]
+    adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
+
+    o_h_labels = np.vstack((ally, ty)) # one-hot encoded
+    o_h_labels[test_idx_reorder, :] = o_h_labels[test_idx_range, :]
+
+    idx_test = test_idx_range.tolist()
+    idx_train = range(len(y))
+    idx_val = range(len(y), len(y)+500)
+
+    train_mask = sample_mask(idx_train, o_h_labels.shape[0])
+    val_mask = sample_mask(idx_val, o_h_labels.shape[0])
+    test_mask = sample_mask(idx_test, o_h_labels.shape[0])
+
+    return features, o_h_labels, adj, train_mask, val_mask, test_mask
+
+# if __name__ == '__main__':
+def main():
+    dataset = "cora"
+    # np.random.seed(0)
+
+    # features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
+    # features = normalize_features(features)
+    # permute(features, neighbors, labels, o_h_labels, keys)
+    # train_idx, val_idx, test_idx = split(dataset, labels)
+    # A = adjacency_matrix(neighbors)
+
+    features, o_h_labels, adj, train_mask, val_mask, test_mask = read_dataset(dataset, yang_splits=True)
+
     
 
 if __name__ == '__main__':

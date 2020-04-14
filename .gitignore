@@ -1,4 +1,6 @@
-data/
+data/citeseer/*
+data/cora/*
+data/pubmed/*
 *.idea/
 *.vscode/
 *__pycache__/
