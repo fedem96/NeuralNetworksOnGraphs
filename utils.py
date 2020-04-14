@@ -196,15 +196,13 @@ def split(dataset, labels):
 
     return mask_train, mask_val, mask_test
 
-def adjacency_matrix(neighbors, self_loops=False, weighted=False):
+def adjacency_matrix(neighbors, weighted=False):
     num_nodes = len(neighbors)
     row_ind = []
     col_ind = []
     values = []
 
     for n, adjacency_list in enumerate(neighbors):
-        if self_loops:
-            row_ind.append(n); col_ind.append(n); values.append(1)
         for edge in adjacency_list:
             neighbor = edge[0]
             weight = edge[1] if weighted else 1

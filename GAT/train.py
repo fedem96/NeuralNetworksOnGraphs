@@ -36,7 +36,7 @@ def main(dataset_name, yang_splits,
         mask_train, mask_val, mask_test = split(dataset_name, labels)
 
         if verbose > 0: print("calculating adjacency matrix")
-        graph = adjacency_matrix(neighbors, self_loops=True)
+        graph = adjacency_matrix(neighbors)
 
     # add self loops to adj matrix
     graph = graph + sp.eye(graph.shape[0])
