@@ -45,9 +45,11 @@ def main(modality, dataset_name, yang_splits,
 
     # Define model, loss, metrics and optimizers
     if modality == "I":
-        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train)
+        labeled_iters = 10000
+        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
     elif modality == "T":
-        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train)
+        labeled_iters = 2000
+        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
 
     L_s = tf.keras.losses.CategoricalCrossentropy("loss_s")
     if neg_sample > 0:
@@ -89,7 +91,7 @@ if __name__ == '__main__':
     
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
-    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
+    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=True, action='store_true')
     
     # network hyperparameters
     parser.add_argument("-emb", "--embedding-dim", help="node embedding size", default=50, type=int)
