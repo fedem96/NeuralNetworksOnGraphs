@@ -3,9 +3,11 @@ import numpy as np
 import datetime, os
 from tqdm import tqdm
 
+from collections import defaultdict as dd
+
 class Planetoid(tf.keras.Model):
 
-    def __init__(self, A, labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate):
+    def __init__(self, A, labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train):
         super().__init__()
         self.A = A
         self.labels = labels
@@ -16,49 +18,100 @@ class Planetoid(tf.keras.Model):
         self.d = window_size
         self.r1 = neg_sample
         self.r2 = sample_context_rate
+        self.train_size = len(np.where(mask_train==True)[0])  # FIXME: SISTEMA NON QUA 
 
     def call(self):
         return
 
-    def sample_context(self, node, perm):
+    def sample_context(self, node, perm, perm_train, it=12000):
         """ Algorithm 1: Sample graph context for one node """
-        random = np.random.random()
-        ist = []
-        cont = []
 
+        # random = np.random.random()
+        # ist = []
+        # cont = []
+        # l = []
+        # max_index = max(perm)
+
+        # gamma = -1 if random < self.r1 else 1
+        # # if random < self.r2:
+        # if it >= 10000:
+        #     # random walk from S of length q
+        #     random_walk = [node]
+        #     for _ in range(self.q):
+        #         random_walk.append(np.random.choice(self.A[random_walk[-1]].indices))
+
+        #     for i in range(len(random_walk)):
+        #         if random_walk[i] > max_index: continue
+        #         for n in random_walk[max(0, i-self.d):min(i+self.d+1, len(random_walk))]:
+        #             if gamma == 1:
+        #                 if n > max_index: continue
+        #                 c = n
+        #             elif gamma == -1:
+        #                 c = np.random.choice(perm)
+        #             ist.append([random_walk[i]])
+        #             cont.append([c])
+        #             l.append([gamma])
+        # else:
+        #     if gamma == 1:
+        #         i, c = np.random.choice(perm_train, 2)
+        #         while (self.labels[i] != self.labels[c]).any():
+        #             c = np.random.choice(perm)
+        #     elif gamma == -1:
+        #         i, c = np.random.choice(perm_train, 2)
+        #         while (self.labels[i] == self.labels[c]).all():
+        #             c = np.random.choice(perm)
+        #     ist.append([i])
+        #     cont.append([c])
+        #     l.append([gamma])
+        # return ist, cont, l   
+
+        random = np.random.random()
         gamma = -1 if random < self.r1 else 1
-        if random < self.r2:
-            # random walk from S of length q
+        max_index = max(perm)
+        g = []
+        g1 = []
+        gy = []
+
+        if it >= 2000:
             random_walk = [node]
             for _ in range(self.q):
                 random_walk.append(np.random.choice(self.A[random_walk[-1]].indices))
+            for l in range(len(random_walk)):
+                if random_walk[l] >= max_index: continue
+                for m in range(l - self.d, l + self.d + 1):
+                    if m < 0 or m >= len(random_walk): continue
+                    if random_walk[m] >= max_index: continue
+                    g.append([random_walk[l]])
+                    g1.append([random_walk[m]])
+                    gy.append([1.0])
+                    for _ in range(int(self.r1)):
+                        g.append([random_walk[l]])
+                        g1.append([np.random.choice(perm)])
+                        gy.append([- 1.0])
 
-            for i in range(len(random_walk)):
-                if gamma == 1:
-                    c = np.random.choice(
-                        random_walk[max(0, i-self.d):min(i+self.d+1, len(random_walk))])
-                elif gamma == -1:
-                    c = np.random.choice(perm)
-                ist.append([random_walk[i]])
-                cont.append([c])
         else:
-            if gamma == 1:
-                i, c = np.random.choice(perm, 2)
-                while (self.labels[i] != self.labels[c]).any():
-                    c = np.random.choice(perm)
-            elif gamma == -1:
-                i, c = np.random.choice(perm, 2)
+            i, c = np.random.choice(perm_train, 2)
+            while (self.labels[i] != self.labels[c]).any():
+                c = np.random.choice(perm_train)
+            g.append([i])
+            g1.append([c])
+            gy.append([1.0])
+            for _ in range(int(self.r1)):
+                g.append([i])
                 while (self.labels[i] == self.labels[c]).all():
-                    c = np.random.choice(perm)
-            ist.append([i])
-            cont.append([c])
+                    c = np.random.choice(perm_train)
+                g1.append([c])
+                gy.append([- 1.0])
 
-        return ist, cont, gamma
+        g = np.array(g, dtype = np.int32)
+        g1 = np.array(g1, dtype = np.int32)
+        gy = np.array(gy, dtype = np.float32)
+        return g, g1, gy
 
     def labeled_batch(self, features, labels, mask_train, N1):
         """ Generate mini-batch for labeled nodes """
         while True:
-            perm = np.array(np.random.permutation(len(features[mask_train])), dtype=np.int32)
+            perm = np.array(np.random.permutation(self.train_size), dtype=np.int32)
             j = 0
             while j < len(mask_train):
                 k = min(len(mask_train), j+N1)
@@ -126,11 +179,11 @@ class Planetoid(tf.keras.Model):
 
 
             # Reset metrics every epoch
-            train_loss.reset_states()
-            train_loss_u.reset_states()
-            val_loss.reset_states()
-            train_accuracy.reset_states()
-            val_accuracy.reset_states()
+            # train_loss.reset_states()
+            # train_loss_u.reset_states()
+            # val_loss.reset_states()
+            # train_accuracy.reset_states()
+            # val_accuracy.reset_states()
 
         self.set_weights(best_weights)
 
@@ -214,15 +267,17 @@ class Planetoid_T(Planetoid):
 
             return out
 
-    def context_batch(self, N2):
+    def context_batch(self, N2, it):
         """ Algorithm 1: Sampling graph context (with negative sample) """
         while True:
+            N2 = N2//2 if it<2000 else N2
             perm = np.random.permutation(self.features_size)
+            perm_train = np.random.permutation(self.train_size)
             j = 0
             while j < len(perm):
                 k = min(len(perm), j+N2)
                 for idx,n in enumerate(perm[j:k]):
-                    i, c, gamma = self.sample_context(n, perm)
+                    i, c, gamma = self.sample_context(n, perm, perm_train, it)
                     if idx == 0:
                         context_b_x = np.concatenate((i,c),-1)
                         context_b_y = gamma
@@ -245,31 +300,35 @@ class Planetoid_T(Planetoid):
             grads = tape.gradient(loss_s, self.trainable_weights)
             optimizer_s.apply_gradients(zip(grads, self.trainable_weights))
 
-            train_loss(loss_s)
-            train_accuracy(b_y, out)
+            # train_loss(loss_s)
+            # train_accuracy(b_y, out)
 
         for it in range(1, self.compute_iters(T2)+1):
-            b_x, b_y = next(self.context_batch(N2))
+            b_x, b_y = next(self.context_batch(N2, it))
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
                 target = b_y if self.r1>0 else b_x[:,1]
-                loss_u = L_u(target, out)
+                # loss_u = L_u(target, out)
+                loss_u = tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(target, out))
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
-            train_loss_u(loss_u)
+            # train_loss_u(loss_u)
 
     def pretrain_step(self, features, mask_test, L_u, optimizer_u, train_loss_u, iters, N2):
 
-        for it in tqdm(range(1, iters+1)):
-            b_x, b_y = next(self.context_batch(N2))
+        # for it in tqdm(range(1, iters+1)):
+        for it in range(1, iters+1):
+            b_x, b_y = next(self.context_batch(N2, it))
             with tf.GradientTape() as tape:
                 out = self.call(b_x, modality="u")
                 target = b_y if self.r1>0 else b_x[:,1]
-                loss_u = L_u(target, out)
+                # loss_u = L_u(target, out)
+                loss_u = tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(target, out))
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
-            train_loss_u(loss_u)
+            print(it, loss_u.numpy())
+            # train_loss_u(loss_u)
 
     def eval(self, features, labels, mask, L_s, test_accuracy, test_loss):
                 
@@ -277,7 +336,7 @@ class Planetoid_T(Planetoid):
         predictions = self.call([features[mask], indices_test], modality="s")
         loss = L_s(labels[mask], predictions)
 
-        test_loss(loss)
+        # test_loss(loss)
         test_accuracy(labels[mask], predictions)
 
 
@@ -345,18 +404,37 @@ class Planetoid_I(Planetoid):
 
             return out
 
-    def context_batch(self, features, mask_test, N2):
+    def context_batch(self, features, mask_test, N2, it):
         """ Algorithm 1: Sampling graph context (with negative sample) """
+
+
+        labels, label2inst, not_label = [], dd(list), dd(list)
+        for i in range(self.train_size):
+            flag = False
+            for j in range(self.labels_size):
+                if self.labels[i, j] == 1 and not flag:
+                    labels.append(j)
+                    label2inst[j].append(i)
+                    flag = True
+                elif self.labels[i, j] == 0:
+                    not_label[j].append(i)
+
         while True:
             perm = np.random.permutation(self.size_valid_ind)
+            perm_train = np.random.permutation(self.train_size)
             j = 0
             while j < len(perm):
                 context_b_x, context_b_y = [], []
                 k = min(len(perm), j+N2)
-                for n in perm[j:k]:
-                    i, c, gamma = self.sample_context(n, perm)
-                    context_b_x.append([i, c])
-                    context_b_y.append(gamma)
+                for idx,n in enumerate(perm[j:k]):
+                    i, c, gamma = self.sample_context(n, perm, perm_train, it)
+                    # i, c, gamma = self.alg_1(n, perm, it, labels, label2inst, not_label)
+                    if idx == 0:
+                        context_b_x = np.concatenate((i,c),-1)
+                        context_b_y = gamma
+                    else:
+                        context_b_x = np.vstack((context_b_x, np.concatenate((i,c),-1)))
+                        context_b_y = np.vstack((context_b_y,gamma))
 
                 context_b_x = np.array(context_b_x, dtype=np.int32)
                 yield features[context_b_x[:,0]], context_b_x[:,1], np.array(context_b_y, dtype=np.float32)
@@ -374,36 +452,85 @@ class Planetoid_I(Planetoid):
             grads = tape.gradient(loss_s, self.trainable_weights)
             optimizer_s.apply_gradients(zip(grads, self.trainable_weights))
         
-            train_loss(loss_s)
-            train_accuracy(b_y, out)
+            # train_loss(loss_s)
+            # train_accuracy(b_y, out)
 
         for it in range(1, self.compute_iters(T2)+1):
-            b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2))
+            b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2, it))
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
                 target = b_y if self.r1>0 else b_c
-                loss_u = L_u(target, out)
+                # loss_u = L_u(target, out)
+                loss_u = tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(target, out))
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
 
-            train_loss_u(loss_u)
+            # train_loss_u(loss_u)
 
     def pretrain_step(self, features, mask_test, L_u, optimizer_u, train_loss_u, iters, N2):
     
-        for it in tqdm(range(1, iters+1)):
-            b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2))
+        # for it in tqdm(range(1, iters+1)):
+        for it in range(1, iters+1):
+            b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2, it))
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
                 target = b_y if self.r1>0 else b_c
-                loss_u = L_u(target, out)
+                # loss_u = L_u(target, out)
+                loss_u = tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(target, out))
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
-            train_loss_u(loss_u)
+            print(it, loss_u.numpy())
+            # train_loss_u(loss_u)
 
     def eval(self, features, labels, mask, L_s, test_accuracy, test_loss):
     
         predictions = self.call(features[mask], modality="s")
         loss = L_s(labels[mask], predictions)
 
-        test_loss(loss)
+        # test_loss(loss)
         test_accuracy(labels[mask], predictions)
+
+
+    def alg_1(self, node, indices, it, labels, label2inst, not_label):
+
+        max_index = max(indices)
+        if it >= 10000:
+            g = []
+            g1 = []
+            gy = []
+            path = [node]
+            for _ in range(self.q):
+                path.append(np.random.choice(self.A[path[-1]].indices))
+            for l in range(len(path)):
+                if path[l] >= max_index: continue
+                for m in range(l - self.d, l + self.d + 1):
+                    if m < 0 or m >= len(path): continue
+                    if path[m] >= max_index: continue
+                    g.append([path[l]])
+                    g1.append([path[m]])
+                    gy.append([1.0])
+                    for _ in range(self.r1):
+                        g.append([path[l]])
+                        g1.append([np.random.choice(indices)])
+                        gy.append([- 1.0])
+
+        else:
+            
+            g = []
+            g1 = []
+            gy = []
+            x1 = np.random.randint(0, self.train_size)
+            label = labels[x1]
+            x2 = np.random.choice(label2inst[label])
+            g.append([x1])
+            g1.append([x2])
+            gy.append([1.0])
+            for _ in range(self.r1):
+                g.append([x1])
+                g1.append([np.random.choice(not_label[label])])
+                gy.append([- 1.0])
+
+        g = np.array(g, dtype = np.int32)
+        g1 = np.array(g1, dtype = np.int32)
+        gy = np.array(gy, dtype = np.float32)
+        return g, g1, gy

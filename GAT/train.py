@@ -34,7 +34,7 @@ def main(dataset_name, yang_splits,
         mask_train, mask_val, mask_test = split(dataset_name, labels)
 
         if verbose > 0: print("calculating adjacency matrix")
-        graph = adjacency_matrix(neighbors)
+        graph = adjacency_matrix(neighbors, self_loop=True)
 
     num_classes = get_num_classes(dataset_name)
     features = normalize_features(features)
@@ -78,7 +78,6 @@ def main(dataset_name, yang_splits,
     print("accuracy on test: " + str(t_accuracy))
     tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
     tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
-
 
 
 if __name__ == '__main__':

@@ -53,10 +53,11 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         current_l = logs.get('val_loss')
         current_a = logs.get('val_masked_accuracy')
-        if current_l < self.best_l or current_a > self.best_a:
+        # if current_l < self.best_l or current_a > self.best_a:
+        if current_a >= self.best_a:
             self.best_weights = self.model.get_weights()
             if not self.checkpoint_path == None:
-                self.model.save_weights(self.checkpoint_path)
+                self.model.save_weights(self.checkpoint_path)   
             self.best_l = min(self.best_l, current_l)
             self.best_a = max(self.best_a, current_a)
             self.wait = 0

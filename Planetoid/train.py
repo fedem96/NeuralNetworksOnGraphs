@@ -21,7 +21,7 @@ def main(modality, dataset_name, yang_splits,
         data_seed, net_seed, checkpoint_path, verbose):
     
     print("Planetoid-{:s}!".format(modality))
-    
+
     # reproducibility
     np.random.seed(data_seed)
     tf.random.set_seed(net_seed)
@@ -45,9 +45,9 @@ def main(modality, dataset_name, yang_splits,
 
     # Define model, loss, metrics and optimizers
     if modality == "I":
-        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
+        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train)
     elif modality == "T":
-        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate)
+        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train)
 
     L_s = tf.keras.losses.CategoricalCrossentropy("loss_s")
     if neg_sample > 0:
@@ -85,10 +85,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Planetoid')
 
     # modality can be I inductive T transductive
-    parser.add_argument("-m", "--modality", help="model to use", default="T", choices=["I", "T"])
+    parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
     
     # dataset choice
-    parser.add_argument("-d", "--dataset", help="dataset to use", default="pubmed", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
     parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
     
     # network hyperparameters

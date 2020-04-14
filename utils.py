@@ -258,7 +258,7 @@ def sample_mask(idx, l): # directly from GCN Github code
 
 def read_dataset_yang_splits(dataset):  # adapted from GCN Github code
     print("reading " + dataset + " dataset with Yang splits")
-    data_folder = os.path.join("data", "yang_splits")
+    data_folder = os.path.join("/home/nicco/Documents/Progetti/NeuralNetworksOnGraphs/data", "yang_splits")
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
