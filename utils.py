@@ -156,8 +156,9 @@ def permute(features, neighbors, labels, o_h_labels, keys):
 
 def normalize_features(features):
     rowsum = np.array(features.sum(1))
+    rowsum[np.where(rowsum == 0)] = np.inf
     normalized_features = features / np.broadcast_to(rowsum, features.T.shape).T
-    normalized_features[np.isinf(normalized_features)] = 0
+    #normalized_features[np.isinf(normalized_features)] = 0
     return normalized_features
 
 def get_num_classes(dataset):
@@ -302,14 +303,14 @@ def read_dataset_yang_splits(dataset):  # adapted from GCN Github code
 
 # if __name__ == '__main__':
 def main():
-    dataset = "cora"
+    dataset = "pubmed"
     # np.random.seed(0)
 
-    # features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
-    # features = normalize_features(features)
-    # permute(features, neighbors, labels, o_h_labels, keys)
-    # train_idx, val_idx, test_idx = split(dataset, labels)
-    # A = adjacency_matrix(neighbors)
+    features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
+    features = normalize_features(features)
+    permute(features, neighbors, labels, o_h_labels, keys)
+    train_idx, val_idx, test_idx = split(dataset, labels)
+    A = adjacency_matrix(neighbors)
 
     features, o_h_labels, adj, train_mask, val_mask, test_mask = read_dataset(dataset, yang_splits=True)
 
