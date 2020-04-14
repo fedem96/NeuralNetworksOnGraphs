@@ -1,5 +1,6 @@
 import argparse
 
+import scipy.sparse as sp
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from add_parent_path import add_parent_path
@@ -37,6 +38,8 @@ def main(dataset_name, yang_splits,
         if verbose > 0: print("calculating adjacency matrix")
         A = adjacency_matrix(neighbors)
 
+    # add self loops to adj matrix
+    A = A + sp.eye(A.shape[0])
     num_classes = get_num_classes(dataset_name)
     features = normalize_features(features)
 
