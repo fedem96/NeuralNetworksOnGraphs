@@ -80,13 +80,15 @@ class EarlyStoppingAvg(tf.keras.callbacks.Callback):
         patience: size of the sliding window (number of epochs)
     """
 
-    def __init__(self, monitor='val_loss', min_delta=0, patience=0, verbose=0, mode='auto', restore_best_weights=False):
+    def __init__(self, monitor='val_loss', min_delta=0, patience=0, verbose=0, mode='auto', restore_best_weights=False, baseline=None, from_epoch=0):
         super(EarlyStoppingAvg, self).__init__()
         self.patience = patience
         self.monitor = monitor
         self.min_delta = min_delta
         self.verbose = verbose
         self.restore_best_weights = restore_best_weights
+        self.baseline = baseline
+        self.from_epoch = from_epoch
 
         if mode == 'auto':
             if 'acc' in monitor:
@@ -97,15 +99,21 @@ class EarlyStoppingAvg(tf.keras.callbacks.Callback):
             assert mode in ['min', 'max']
             self.mode = mode
 
+        if self.mode == 'max' and baseline is not None: self.baseline = -self.baseline
+
     def on_train_begin(self, logs=None):
         self.window = []
         self.stopped_epoch = 0
         self.best = np.Inf
         self.best_weights = None
+        self.baseline_reached = False
 
     def on_epoch_end(self, epoch, logs=None):
         self.last = logs.get(self.monitor)
         if self.mode == 'max': self.last = -self.last
+
+        if self.baseline is None or self.last < self.baseline:
+            self.baseline_reached = True
 
         if self.window == []:
             self.window = [self.last]
@@ -113,7 +121,9 @@ class EarlyStoppingAvg(tf.keras.callbacks.Callback):
                 self.best_weights = self.model.get_weights()
             return
 
-        if self.last > np.mean(self.window) + self.min_delta and (self.patience <= 0 or len(self.window) == self.patience):
+        out_of_patience = self.patience <= 0 or len(self.window) == self.patience
+
+        if epoch >= self.from_epoch and self.baseline_reached and self.last > np.mean(self.window) + self.min_delta and out_of_patience:
             self.model.stop_training = True
             self.stopped_epoch = epoch
         else:
@@ -127,10 +137,10 @@ class EarlyStoppingAvg(tf.keras.callbacks.Callback):
                 self.best_weights = self.model.get_weights()
 
     def on_train_end(self, logs=None):
-        if self.stopped_epoch > 0:
-            if self.restore_best_weights:
-                self.model.set_weights(self.best_weights)
+        if self.restore_best_weights:
+            self.model.set_weights(self.best_weights)
 
+        if self.stopped_epoch > 0:
             if self.mode == 'max': self.last = -self.last
             if self.mode == 'max': self.best = -self.best
             print('Early stop at epoch {:d} with best {} {:.3f}, last {:.3f}' .format(self.stopped_epoch, self.monitor, self.best, self.last))

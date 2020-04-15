@@ -15,7 +15,7 @@ with add_parent_path():
 # TODO: refactor code
 def main(dataset_name, yang_splits,
         dropout_rate, hidden_units,
-        training_epochs, learning_rate, l2_weight, patience,
+        training_epochs, learning_rate, l2_weight, patience, from_epoch, baseline,
         data_seed, net_seed,
         model_path, verbose):
     
@@ -66,7 +66,7 @@ def main(dataset_name, yang_splits,
 
     if verbose > 0: print("begin training")
     callbacks = []
-    callbacks.append(EarlyStoppingAvg(monitor='val_loss', mode='min', min_delta=0, patience=patience, restore_best_weights=True, verbose=verbose))
+    callbacks.append(EarlyStoppingAvg(monitor='val_loss', mode='min', min_delta=0, patience=patience, from_epoch=from_epoch, baseline=baseline, restore_best_weights=True, verbose=verbose))
     callbacks.append(TensorBoard(log_dir='logs'))
     if model_path is not None:
         callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=True, verbose=verbose))
@@ -113,6 +113,8 @@ if __name__ == "__main__":
     parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=0.01, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
     parser.add_argument("-p", "--patience", help="patience for early stop", default=10, type=int)
+    parser.add_argument("-fe", "--from-epoch", help="epoch from which early stopping could be used", default=30, type=int)
+    parser.add_argument("-b", "--baseline", help="baseline value to reach for the val_loss before early stopping can be applied", default=1.5, type=float)
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
@@ -127,6 +129,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args.dataset, args.yang_splits,
         args.dropout_rate, args.hidden_units,
-        args.epochs, args.learning_rate, args.l2_weight, args.patience,
+        args.epochs, args.learning_rate, args.l2_weight, args.patience, args.from_epoch, args.baseline,
         args.data_seed, args.net_seed,
         args.checkpoint_path, args.verbose)
