@@ -17,14 +17,13 @@ def masked_accuracy(y_true, y_pred):
 
 class UnlabeledLoss(tf.keras.losses.Loss):
 
-    def __init__(self, N2):
+    def __init__(self):
         super().__init__()
-        self.N2 = N2
 
     def call(self, y_true, y_pred):
         s = tf.reduce_sum(y_pred, axis=1)
-        dot_prod = tf.math.multiply(s, y_true)
-        loss = - 1.0/self.N2 * tf.reduce_sum(tf.math.log(tf.sigmoid(dot_prod)))
+        dot_prod = tf.math.multiply(s, tf.squeeze(y_true))
+        loss = - tf.reduce_sum(tf.math.log(tf.sigmoid(dot_prod)))
         return loss
 
 class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):

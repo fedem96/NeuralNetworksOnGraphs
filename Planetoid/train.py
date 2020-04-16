@@ -11,6 +11,7 @@ with add_parent_path():
     from utils import *
 
 
+
 def main(modality, dataset_name, yang_splits,
         embedding_dim, epochs, pretrain_batch,
         supervised_batch, unsupervised_batch, supervised_batch_size,
@@ -48,20 +49,20 @@ def main(modality, dataset_name, yang_splits,
         labeled_iters = 10000
         model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
     elif modality == "T":
-        labeled_iters = 2000
+        labeled_iters = 2000    
         model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
 
     L_s = tf.keras.losses.CategoricalCrossentropy("loss_s")
     if neg_sample > 0:
-        L_u = UnlabeledLoss(unsupervised_batch_size)
+        L_u = UnlabeledLoss()
     else:
         L_u = tf.keras.losses.SparseCategoricalCrossentropy("loss_u")
 
     train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_accuracy")
     val_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_val_accuracy")
-    train_loss = tf.keras.metrics.Mean('bw_loss', dtype=tf.float32)
-    train_loss_u = tf.keras.metrics.Mean('bw_loss_u', dtype=tf.float32)
-    val_loss = tf.keras.metrics.Mean('bw_val_loss', dtype=tf.float32)
+    train_loss = tf.keras.metrics.Mean('bw_loss', dtype=tf.float32) # FIXME: NON LA USO
+    train_loss_u = tf.keras.metrics.Mean('bw_loss_u', dtype=tf.float32) # FIXME: NON LA USO
+    val_loss = tf.keras.metrics.Mean('bw_val_loss', dtype=tf.float32)  # FIXME: NON LA USO
 
     optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)   
     optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)      
@@ -87,7 +88,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Planetoid')
 
     # modality can be I inductive T transductive
-    parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
+    parser.add_argument("-m", "--modality", help="model to use", default="T", choices=["I", "T"])
     
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
@@ -110,7 +111,7 @@ if __name__ == '__main__':
     # sampling algorithm (Alg.1) hyper-parameters
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
     parser.add_argument("-w", "--window-size", help="window size", default=3, type=int)
-    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=0, type=float)
+    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=1, type=int)
     parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=0.038, type=float)
 
     # reproducibility
