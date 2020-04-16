@@ -463,7 +463,7 @@ class Planetoid_I(Planetoid):
 
         return loss_s
 
-    def pretrain_step(self, features, mask_test, L_u, optimizer_u, iters, N2):
+    def pretrain_step(self, features, mask_test, L_u, optimizer_u, iters, N2, verbose=1):
         
         for it in range(1, iters+1):
             b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2, it))
@@ -475,7 +475,7 @@ class Planetoid_I(Planetoid):
                     loss_u = tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(b_c, out))
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
-            print(it, loss_u.numpy())
+            if verbose > 0: print(it, loss_u.numpy())
 
     def eval(self, features, labels, mask, L_s, test_accuracy):
     
