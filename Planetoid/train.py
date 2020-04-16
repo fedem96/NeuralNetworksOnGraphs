@@ -10,8 +10,6 @@ with add_parent_path():
     from metrics import UnlabeledLoss
     from utils import *
 
-
-
 def main(modality, dataset_name, yang_splits,
         embedding_dim, epochs, pretrain_batch,
         supervised_batch, unsupervised_batch, supervised_batch_size,
@@ -60,27 +58,23 @@ def main(modality, dataset_name, yang_splits,
 
     train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_accuracy")
     val_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_val_accuracy")
-    train_loss = tf.keras.metrics.Mean('bw_loss', dtype=tf.float32) # FIXME: NON LA USO
-    train_loss_u = tf.keras.metrics.Mean('bw_loss_u', dtype=tf.float32) # FIXME: NON LA USO
-    val_loss = tf.keras.metrics.Mean('bw_val_loss', dtype=tf.float32)  # FIXME: NON LA USO
 
     optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)   
     optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)      
 
     if verbose > 0: print("pre-train model")
     # Pretrain iterations on graph context
-    model.pretrain_step(features, mask_test, L_u, optimizer_u, train_loss_u, pretrain_batch, unsupervised_batch_size)
+    model.pretrain_step(features, mask_test, L_u, optimizer_u, pretrain_batch, unsupervised_batch_size)
 
     if verbose > 0: print("begin training")
-    model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, train_loss, 
-            train_loss_u, val_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path, verbose)
+    model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path, verbose)
 
     if verbose > 0: print("test the model on test set")
 
     test_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_test_accuracy")
     test_loss = tf.keras.metrics.Mean('bw_test_loss', dtype=tf.float32)
 
-    t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy, test_loss)
+    t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy)
     print("Test acc {:.3f}" .format(t_acc))
 
 if __name__ == '__main__':
@@ -88,7 +82,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Planetoid')
 
     # modality can be I inductive T transductive
-    parser.add_argument("-m", "--modality", help="model to use", default="T", choices=["I", "T"])
+    parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
     
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
@@ -99,7 +93,7 @@ if __name__ == '__main__':
 
     # optimization parameters
     parser.add_argument("-e", "--epochs", help="training epochs", default=10, type=int)
-    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=10400, type=int)
+    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=10, type=int)
     parser.add_argument("-t1", "--supervised-batch", help="supervised batch number at each epoch", default=1.0, type=float)
     parser.add_argument("-t2", "--unsupervised-batch", help="unsupervised batch number at each epoch", default=0.1, type=float)
     parser.add_argument("-n1", "--supervised-batch-size", help="supervised mini-batch size", default=200, type=int)
@@ -111,7 +105,7 @@ if __name__ == '__main__':
     # sampling algorithm (Alg.1) hyper-parameters
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
     parser.add_argument("-w", "--window-size", help="window size", default=3, type=int)
-    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=1, type=int)
+    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=0, type=int)
     parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=0.038, type=float)
 
     # reproducibility
