@@ -61,8 +61,8 @@ class Planetoid(tf.keras.Model):
 
             if verbose > 0: print("Epoch: {:d} ".format(epoch), end=' ')
 
-            loss_s = self.train_step(features, labels, mask_train, mask_test, L_u, optimizer_u, optimizer_s,
-                                train_accuracy, T1, T2, N1, N2)
+            loss_s = self.train_step(features, labels, mask_train, mask_test, L_u, optimizer_u,
+                                    optimizer_s, train_accuracy, T1, T2, N1, N2)
 
             if verbose > 0: print("loss {:.3f}, acc {:.3f} ==>".format(loss_s, train_accuracy.result()), end=' ')
 
@@ -278,7 +278,7 @@ class Planetoid_T(Planetoid):
 
         return loss_s
 
-    def pretrain_step(self, features, mask_test, L_u, optimizer_u, iters, N2):
+    def pretrain_step(self, features, mask_test, L_u, optimizer_u, iters, N2, verbose=1):
 
         # for it in tqdm(range(1, iters+1)):
         for it in range(1, iters+1):
@@ -291,7 +291,7 @@ class Planetoid_T(Planetoid):
                     loss_u = tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(b_x[:,1], out))
             grads = tape.gradient(loss_u, self.trainable_weights)
             optimizer_u.apply_gradients(zip(grads, self.trainable_weights))
-            print(it, loss_u.numpy())
+            if verbose > 0: print(it, loss_u.numpy())
 
     def eval(self, features, labels, mask, L_s, test_accuracy):
                 

@@ -64,7 +64,7 @@ def main(modality, dataset_name, yang_splits,
 
     if verbose > 0: print("pre-train model")
     # Pretrain iterations on graph context
-    model.pretrain_step(features, mask_test, L_u, optimizer_u, pretrain_batch, unsupervised_batch_size)
+    model.pretrain_step(features, mask_test, L_u, optimizer_u, pretrain_batch, unsupervised_batch_size, verbose)
 
     if verbose > 0: print("begin training")
     model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path, verbose)
