@@ -10,8 +10,6 @@ with add_parent_path():
     from metrics import UnlabeledLoss
     from utils import *
 
-
-
 def main(modality, dataset_name, yang_splits,
         embedding_dim, epochs, pretrain_batch,
         supervised_batch, unsupervised_batch, supervised_batch_size,
@@ -60,30 +58,23 @@ def main(modality, dataset_name, yang_splits,
 
     train_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_accuracy")
     val_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_val_accuracy")
-    train_loss = tf.keras.metrics.Mean('bw_loss', dtype=tf.float32) # FIXME: NON LA USO
-    train_loss_u = tf.keras.metrics.Mean('bw_loss_u', dtype=tf.float32) # FIXME: NON LA USO
-    val_loss = tf.keras.metrics.Mean('bw_val_loss', dtype=tf.float32)  # FIXME: NON LA USO
 
     optimizer_u = tf.keras.optimizers.SGD(learning_rate=learning_rate_unsupervised)   
     optimizer_s = tf.keras.optimizers.SGD(learning_rate=learning_rate_supervised)      
 
     if verbose > 0: print("pre-train model")
     # Pretrain iterations on graph context
-    print("ciao")
-    print(pretrain_batch)
-    print(unsupervised_batch_size)
-    model.pretrain_step(features, mask_test, L_u, optimizer_u, train_loss_u, pretrain_batch, unsupervised_batch_size)
+    model.pretrain_step(features, mask_test, L_u, optimizer_u, pretrain_batch, unsupervised_batch_size, verbose)
 
     if verbose > 0: print("begin training")
-    model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, train_loss, 
-            train_loss_u, val_loss, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path, verbose)
+    model.train(features, o_h_labels, mask_train, mask_val, mask_test, epochs, L_s, L_u, optimizer_u, optimizer_s, train_accuracy, val_accuracy, supervised_batch, unsupervised_batch, supervised_batch_size, unsupervised_batch_size, patience, checkpoint_path, verbose)
 
     if verbose > 0: print("test the model on test set")
 
     test_accuracy = tf.keras.metrics.CategoricalAccuracy(name="bw_test_accuracy")
     test_loss = tf.keras.metrics.Mean('bw_test_loss', dtype=tf.float32)
 
-    t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy, test_loss)
+    t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy)
     print("Test acc {:.3f}" .format(t_acc))
 
 if __name__ == '__main__':
