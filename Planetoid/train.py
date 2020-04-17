@@ -69,6 +69,9 @@ def main(modality, dataset_name, yang_splits,
 
     if verbose > 0: print("pre-train model")
     # Pretrain iterations on graph context
+    print("ciao")
+    print(pretrain_batch)
+    print(unsupervised_batch_size)
     model.pretrain_step(features, mask_test, L_u, optimizer_u, train_loss_u, pretrain_batch, unsupervised_batch_size)
 
     if verbose > 0: print("begin training")
@@ -88,7 +91,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Planetoid')
 
     # modality can be I inductive T transductive
-    parser.add_argument("-m", "--modality", help="model to use", default="T", choices=["I", "T"])
+    parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
     
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
@@ -98,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument("-emb", "--embedding-dim", help="node embedding size", default=50, type=int)
 
     # optimization parameters
-    parser.add_argument("-e", "--epochs", help="training epochs", default=10, type=int)
+    parser.add_argument("-e", "--epochs", help="training epochs", default=1000, type=int)
     parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=10400, type=int)
     parser.add_argument("-t1", "--supervised-batch", help="supervised batch number at each epoch", default=1.0, type=float)
     parser.add_argument("-t2", "--unsupervised-batch", help="unsupervised batch number at each epoch", default=0.1, type=float)
@@ -111,7 +114,7 @@ if __name__ == '__main__':
     # sampling algorithm (Alg.1) hyper-parameters
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
     parser.add_argument("-w", "--window-size", help="window size", default=3, type=int)
-    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=1, type=int)
+    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=0, type=int)
     parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=0.038, type=float)
 
     # reproducibility

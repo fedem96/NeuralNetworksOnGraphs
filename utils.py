@@ -1,4 +1,4 @@
-import csv, os, pickle as pkl, sys
+import copy, csv, os, pickle as pkl, sys
 
 import networkx as nx
 import numpy as np
@@ -139,6 +139,8 @@ def one_hot_enc(n_classes, labels):
 
 
 def permute(features, neighbors, labels, o_h_labels, keys):
+
+    neighbors = copy.deepcopy(neighbors)
 
     permutation = np.random.permutation(len(keys))
     inv_permutation = np.argsort(permutation)
@@ -302,15 +304,16 @@ def read_dataset_yang_splits(dataset):  # adapted from GCN Github code
 # if __name__ == '__main__':
 def main():
     dataset = "pubmed"
-    # np.random.seed(0)
+    #np.random.seed(0)
 
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset)
     features = normalize_features(features)
-    permute(features, neighbors, labels, o_h_labels, keys)
+    features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
     train_idx, val_idx, test_idx = split(dataset, labels)
     A = adjacency_matrix(neighbors)
 
     features, o_h_labels, adj, train_mask, val_mask, test_mask = read_dataset(dataset, yang_splits=True)
+    print("ciao")
 
     
 

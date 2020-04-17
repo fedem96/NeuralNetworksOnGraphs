@@ -38,8 +38,6 @@ def main(dataset_name, yang_splits,
         if verbose > 0: print("calculating adjacency matrix")
         A = adjacency_matrix(neighbors)
 
-    # add self loops to adj matrix
-    A = A + sp.eye(A.shape[0])
     num_classes = get_num_classes(dataset_name)
     features = normalize_features(features)
 

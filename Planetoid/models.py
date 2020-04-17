@@ -224,8 +224,7 @@ class Planetoid_T(Planetoid):
         """
         if modality == "s":
             # freeze embedding during label classification
-            self.emb_cont.trainable = False   
-            self.emb_inst.trainable = False        
+            self.emb_cont.trainable = False
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True
 
             h_f = self.h_k(inputs[0])
@@ -242,7 +241,6 @@ class Planetoid_T(Planetoid):
             # enable only embedding layer during unsupervised learning
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = False
             self.emb_cont.trainable = True
-            self.emb_inst.trainable = True
 
             emb_i = self.emb_inst(inputs[:, 0])
             
