@@ -454,7 +454,7 @@ class Planetoid_I(Planetoid):
             b_x, b_c, b_y = next(self.context_batch(features, mask_test, N2, it))
             with tf.GradientTape() as tape:
                 out = self.call([b_x, b_c], modality="u")
-                if self.r1>0:
+                if self.r1 > 0:
                     loss_u = L_u(b_y, out)
                 else:
                     loss_u = tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(b_c, out))
