@@ -18,10 +18,10 @@ def compute_statistics(df, seed_value):
 
     return statistics
 
-def report_statistics(f_path, seed_value, runs):
+def report_statistics(f_path, seed_value, nrows):
     
     # read the first 60 csv lines (last experiments)
-    df = pd.read_csv(f_path, sep =',', usecols=["operation", "data-seed", "net-seed", "dataset", "bw_test_accuracy"], nrows=runs*3*2)
+    df = pd.read_csv(f_path, sep =',', usecols=["operation", "data-seed", "net-seed", "dataset", "bw_test_accuracy"]), nrows=nrows)
     # extract model name from csv
     model_name = df["operation"][0].split('|')[0]
 
@@ -51,6 +51,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train GCN')
     parser.add_argument("-p", "--path", help="path to csv result file")
     parser.add_argument("-v", "--value", help="fixed seed value", default=5687, type=int)
-    parser.add_argument("-r", "--runs", help="number of experimental runs", default=30, type=int)
+    parser.add_argument("-r", "--runs", help="number of experimental runs", default=None, type=int)
     args = parser.parse_args()
     report_statistics(args.path, args.value, args.runs)
