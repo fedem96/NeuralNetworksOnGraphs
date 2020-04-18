@@ -159,10 +159,10 @@
       steps:
         - run: train-citeseer verbose=0 baseline=1.20 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
         - run: train-cora     verbose=0 baseline=0.95 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
-        - run: train-pubmed   verbose=0 baseline=0.78 baseline=0.78 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   verbose=0 baseline=0.75 patience=15 net-seed=5687 data-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
         - run: train-citeseer verbose=0 baseline=1.20 yang-splits=True data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
         - run: train-cora     verbose=0 baseline=0.95 yang-splits=True data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
-        - run: train-pubmed   verbose=0 baseline=0.78 yang-splits=True data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
+        - run: train-pubmed   verbose=0 baseline=0.75 patience=15 yang-splits=True data-seed=5687 net-seed=[9516,1353,551,4975,9399,6608,5688,8964,872,6473]
 
     evaluate100:
       description: ... # TODO:
