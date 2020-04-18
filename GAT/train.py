@@ -58,7 +58,12 @@ def main(dataset_name, yang_splits,
 
     if verbose > 0: print("begin training")    
     tb = TensorBoard(log_dir='logs')
-    monitor = 'acc_loss' if dataset_name=='cora' else 'acc'
+    if dataset_name == 'cora':
+        monitor = 'acc_loss'
+    elif dataset_name == 'pubmed':
+        monitor = 'loss'
+    else:
+        monitor = 'acc'
     es = EarlyStoppingAccLoss(patience, monitor, checkpoint_path, 'GAT')
 
     model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)

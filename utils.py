@@ -5,6 +5,12 @@ import numpy as np
 import scipy.sparse as sparse
 from scipy.sparse.linalg import eigs
 
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import pandas as pd
+
 DIR_NAME = os.path.dirname(os.path.realpath(__file__))
 data = DIR_NAME + '/data'
 
@@ -301,6 +307,34 @@ def read_dataset_yang_splits(dataset):  # adapted from GCN Github code
 
     return features, o_h_labels, adj, train_mask, val_mask, test_mask
 
+
+
+def plot_tsne(data, labels, n_classes):
+    """ Input: 
+            - model weights to fit into t-SNE
+            - labels (no one hot encode)
+            - num_classes
+    """
+    n_components = 2
+
+    tsne = TSNE(n_components=n_components, init='pca', perplexity=40, random_state=0)
+    tsne_res = tsne.fit_transform(data)
+
+    v = pd.DataFrame(data,columns=[str(i) for i in range(data.shape[1])])
+    v['y'] = labels
+    v['label'] = v['y'].apply(lambda i: str(i))
+    v["t1"] = tsne_res[:,0]
+    v["t2"] = tsne_res[:,1]
+
+    sns.scatterplot(
+        x="t1", y="t2",
+        hue="y",
+        palette=sns.color_palette("muted", n_classes), #"hls"
+        legend="full",
+        data=v,
+    )
+    plt.show()
+
 # if __name__ == '__main__':
 def main():
     dataset = "pubmed"
@@ -313,9 +347,8 @@ def main():
     A = adjacency_matrix(neighbors)
 
     features, o_h_labels, adj, train_mask, val_mask, test_mask = read_dataset(dataset, yang_splits=True)
-    print("ciao")
 
     
-
+    
 if __name__ == '__main__':
     main()
