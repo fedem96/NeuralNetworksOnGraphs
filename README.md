@@ -57,6 +57,8 @@ For each algorithm, we report:
 
 
 # t-SNE
+t-SNE plots of the hidden features obtained with trained models on the Cora dataset. Points represent graph nodes, whereas different colors represent different class labels.
+
 Planetoid-T             |  ChebNet
 :-------------------------:|:-------------------------:
 ![](t-SNE/Planetoid-T_t-SNE.png)  |  ![](t-SNE/ChebNet_t-SNE.png)
