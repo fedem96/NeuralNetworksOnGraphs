@@ -15,13 +15,16 @@ class GAT(tf.keras.Model):
         self.feat_drop_rate = feat_drop_rate
 
         
-    def call(self, x, training=True):
+    def call(self, x, training=True, intermediate=False):
         # Input x has shape (n_nodes, features)
         feat_dr = self.feat_drop_rate if training else 0.0
 
         for att in self.atts:
             drop_inp = tf.nn.dropout(x, feat_dr)
             x = att(drop_inp, training)
+        
+        if intermediate:
+            return x
 
         drop_h = tf.nn.dropout(x, feat_dr)
         out = self.att_out(drop_h, training)

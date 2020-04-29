@@ -5,12 +5,6 @@ import numpy as np
 import scipy.sparse as sparse
 from scipy.sparse.linalg import eigs
 
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-import pandas as pd
-
 DIR_NAME = os.path.dirname(os.path.realpath(__file__))
 data = DIR_NAME + '/data'
 
@@ -310,6 +304,11 @@ def read_dataset_yang_splits(dataset):  # adapted from GCN Github code
 
 
 def plot_tsne(data, labels, n_classes):
+
+    from sklearn.manifold import TSNE
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
     """ Input: 
             - model weights to fit into t-SNE
             - labels (no one hot encode)
@@ -329,8 +328,8 @@ def plot_tsne(data, labels, n_classes):
     sns.scatterplot(
         x="t1", y="t2",
         hue="y",
-        palette=sns.color_palette("muted", n_classes), #"hls"
-        legend="full",
+        palette=sns.color_palette("husl", n_classes), # "hls" "muted" "husl"
+        legend=False,
         data=v,
     )
     plt.show()

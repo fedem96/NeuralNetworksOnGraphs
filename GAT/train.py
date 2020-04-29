@@ -24,6 +24,7 @@ def main(dataset_name, yang_splits,
 
     if yang_splits:
         features, o_h_labels, graph, mask_train, mask_val, mask_test = read_dataset(dataset_name, yang_splits=True)
+        labels = np.array([np.argmax(l) for l in o_h_labels], dtype=np.int32)
     else:
         if verbose > 0: print("reading dataset")
         features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
@@ -89,14 +90,17 @@ def main(dataset_name, yang_splits,
     tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
     tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
 
+    intermediate_output = model.call(features, training=False, intermediate=True)
+    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]))
+
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Train GAT')
 
     # dataset choice
-    parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])
-    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
+    parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=True, action='store_true')
     
     # network hyperparameters
     parser.add_argument('-nh', '--nheads', help='heads number per layer (the len of the list represent the model layers number)', default='8,1')
@@ -105,7 +109,7 @@ if __name__ == '__main__':
     parser.add_argument("-cd", "--coefs-drop-rate", help="dropout rate for attention coefficients (fraction of the input units to drop)", default=0.4, type=float)
 
     # optimization parameters
-    parser.add_argument("-e", "--epochs", help="number of training epochs", default=10, type=int)  
+    parser.add_argument("-e", "--epochs", help="number of training epochs", default=1000, type=int)  
     parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=5e-3, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
     parser.add_argument("-p", "--patience", help="patience for early stop", default=100, type=int)

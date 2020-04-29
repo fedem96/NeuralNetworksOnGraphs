@@ -118,6 +118,12 @@ class Planetoid(tf.keras.Model):
         tf.summary.scalar('bw_test_accuracy', data=test_accuracy.result(), step=1)
 
         return loss, test_accuracy.result()
+    
+    def get_manifold(self, inputs):
+        ''' extract manifold of model for tsne ''' 
+        intermediate_output = self.call(inputs, intermediate=True)
+
+        return intermediate_output
 
 
 class Planetoid_T(Planetoid):
@@ -146,7 +152,7 @@ class Planetoid_T(Planetoid):
         # Output layer after concatenation
         self.pred_layer = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
-    def call(self, inputs, modality="s"):
+    def call(self, inputs, modality="s", intermediate=False):
         """ 
             Model forward. Modality specify: 
                 - "s" : supervised
@@ -156,10 +162,14 @@ class Planetoid_T(Planetoid):
             # freeze embedding during label classification
             self.emb_cont.trainable = False   
             self.h_k.trainable = self.h_l.trainable = self.pred_layer.trainable = True
+            
+            if intermediate:
+                embs = self.emb_inst(inputs)
+                return embs
+            else:
+                h_f = self.h_k(inputs[0])
+                embs = self.emb_inst(inputs[1])
 
-            h_f = self.h_k(inputs[0])
-
-            embs = self.emb_inst(inputs[1])
             h_e = self.h_l(embs)
 
             h_node = tf.keras.layers.concatenate([h_f, h_e])
@@ -234,10 +244,10 @@ class Planetoid_T(Planetoid):
 
                     else:
                         i = choice(perm_train)
-                        batch_inst.append([i, choice(label2inst[labels[i]])])
+                        batch_inst.append([i, choice(label2inst[np.argmax(self.labels[i])])])
                         batch_labels.append(1.0)
                         for _ in range(ns):
-                            batch_inst.append([i, choice(not_label[labels[i]])])
+                            batch_inst.append([i, choice(not_label[np.argmax(self.labels[i])])])
                             batch_labels.append(- 1.0)
                 
                 yield np.array(batch_inst, dtype=np.int32), np.array(batch_labels, dtype=np.float32)
@@ -330,7 +340,7 @@ class Planetoid_I(Planetoid):
         # Output layer after concatenation
         self.pred_layer = tf.keras.layers.Dense(self.labels_size, activation=tf.nn.softmax, kernel_initializer=tf.keras.initializers.GlorotUniform)
 
-    def call(self, inputs, modality="s"):
+    def call(self, inputs, modality="s", intermediate=False):
         """ 
             Model forward. Modality specify: 
                 - "s" : supervised
@@ -344,6 +354,10 @@ class Planetoid_I(Planetoid):
             h_f = self.h_k(inputs)
 
             h_l1 = self.par_embedding(inputs)
+            
+            if intermediate:
+                return h_l1
+
             h_e = self.h_l(h_l1)
 
             h_node = tf.keras.layers.concatenate([h_f, h_e])
@@ -394,6 +408,7 @@ class Planetoid_I(Planetoid):
         while True:
             perm = np.random.permutation(self.size_valid_ind)
             perm_train = np.random.permutation(train_idx)
+            inv_perm = np.argsort(perm_train)
             max_index = max(perm)
             j = 0
             while j < len(perm):
@@ -417,10 +432,10 @@ class Planetoid_I(Planetoid):
                                     batch_labels.append(- 1.0)
                     else:
                         i = choice(perm_train)
-                        batch_inst.append([i, choice(label2inst[labels[i]])])
+                        batch_inst.append([i, choice(label2inst[np.argmax(self.labels[i])])])
                         batch_labels.append(1.0)
                         for _ in range(ns):
-                            batch_inst.append([i, choice(not_label[labels[i]])])
+                            batch_inst.append([perm_train[i], choice(not_label[np.argmax(self.labels[i])])])
                             batch_labels.append(- 1.0)
 
                 batch_inst = np.array(batch_inst, dtype=np.int32)

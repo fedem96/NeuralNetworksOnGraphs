@@ -27,6 +27,7 @@ def main(modality, dataset_name, yang_splits,
 
     if yang_splits:
         features, o_h_labels, A, mask_train, mask_val, mask_test = read_dataset(dataset_name, yang_splits=True)
+        labels = np.array([np.argmax(l) for l in o_h_labels], dtype=np.int32)
     else:
         if verbose > 0: print("reading dataset")
         features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
@@ -75,25 +76,36 @@ def main(modality, dataset_name, yang_splits,
     test_loss = tf.keras.metrics.Mean('bw_test_loss', dtype=tf.float32)
 
     t_loss, t_acc = model.test(features, o_h_labels, mask_test, L_s, test_accuracy)
+
     print("Test acc {:.3f}" .format(t_acc))
+
+    # tsne of the hidden rapresentations: 
+    if modality == "T":
+        # - instances embeddings for the transductive one
+        intermediate_output = model.get_manifold(np.where(mask_test)[0])
+    else:
+        # - par embeddings for the the inductive model;
+        intermediate_output = model.get_manifold(features[mask_test])
+    
+    plot_tsne(intermediate_output, labels[mask_test], len(o_h_labels[0]))
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Train Planetoid')
 
     # modality can be I inductive T transductive
-    parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
+    parser.add_argument("-m", "--modality", help="model to use", default="T", choices=["I", "T"])
     
     # dataset choice
     parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
-    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=True, action='store_true')
+    parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
     
     # network hyperparameters
     parser.add_argument("-emb", "--embedding-dim", help="node embedding size", default=50, type=int)
 
     # optimization parameters
-    parser.add_argument("-e", "--epochs", help="training epochs", default=1000, type=int)
-    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=10400, type=int)
+    parser.add_argument("-e", "--epochs", help="training epochs", default=1, type=int)
+    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=1, type=int)
     parser.add_argument("-t1", "--supervised-batch", help="supervised batch number at each epoch", default=1.0, type=float)
     parser.add_argument("-t2", "--unsupervised-batch", help="unsupervised batch number at each epoch", default=0.1, type=float)
     parser.add_argument("-n1", "--supervised-batch-size", help="supervised mini-batch size", default=200, type=int)
