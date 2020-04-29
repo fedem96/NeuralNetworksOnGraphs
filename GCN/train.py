@@ -97,7 +97,7 @@ def main(dataset_name, yang_splits,
 
     intermediate_layer_model = tf.keras.Sequential([model.layers[0], model.layers[1]])
     intermediate_output = intermediate_layer_model.predict(features, batch_size=len(features))
-    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]))
+    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'GCN')
     
 
 if __name__ == "__main__":

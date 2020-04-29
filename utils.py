@@ -316,7 +316,7 @@ def plot_tsne(data, labels, n_classes):
     """
     n_components = 2
 
-    tsne = TSNE(n_components=n_components, init='pca', perplexity=40, random_state=0)
+    tsne = TSNE(n_components=n_components, init='pca', perplexity=40, random_state=0, model_name=None)
     tsne_res = tsne.fit_transform(data)
 
     v = pd.DataFrame(data,columns=[str(i) for i in range(data.shape[1])])
@@ -328,7 +328,7 @@ def plot_tsne(data, labels, n_classes):
     sns.scatterplot(
         x="t1", y="t2",
         hue="y",
-        palette=sns.color_palette(["#000000", "#66cdaa", "#ff8c00", "#00ff00", "#0000ff", "#1e90ff", "#ff1493"]),    #("Set2", n_classes), # "hls" "muted" "husl"
+        palette=sns.color_palette(["#52D1DC", "#845218", "#8D0004", "#563EAA", "#E44658", "#63C100", "#FF7800"]),
         legend=False,
         data=v,
     )
@@ -336,7 +336,7 @@ def plot_tsne(data, labels, n_classes):
     plt.yticks([])
     plt.xlabel('') 
     plt.ylabel('')
-    plt.show()
+    plt.savefig(DIR_NAME+'/tsne/'+model_name+'tsne.png')
 
 # if __name__ == '__main__':
 def main():

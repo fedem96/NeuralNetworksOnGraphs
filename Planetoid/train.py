@@ -87,7 +87,7 @@ def main(modality, dataset_name, yang_splits,
         # - par embeddings for the the inductive model;
         intermediate_output = model.get_manifold(features[mask_test])
     
-    plot_tsne(intermediate_output, labels[mask_test], len(o_h_labels[0]))
+    plot_tsne(intermediate_output, labels[mask_test], len(o_h_labels[0]), 'Planetoid-'+modality)
 
 if __name__ == '__main__':
 

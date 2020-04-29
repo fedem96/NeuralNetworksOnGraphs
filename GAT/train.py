@@ -91,7 +91,7 @@ def main(dataset_name, yang_splits,
     tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
 
     intermediate_output = model.call(features, training=False, intermediate=True)
-    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]))
+    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'GAT')
 
 
 if __name__ == '__main__':
