@@ -25,6 +25,7 @@ def main(dataset_name, yang_splits,
 
     if yang_splits:
         features, o_h_labels, A, mask_train, mask_val, mask_test = read_dataset(dataset_name, yang_splits=True)
+        labels = np.array([np.argmax(l) for l in o_h_labels], dtype=np.int32)
     else:
         if verbose > 0: print("reading dataset")
         features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
@@ -93,6 +94,10 @@ def main(dataset_name, yang_splits,
     print("accuracy on test: " + str(t_accuracy))
     tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
     tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
+
+    intermediate_layer_model = tf.keras.Sequential([model.layers[0], model.layers[1]])
+    intermediate_output = intermediate_layer_model.predict(features, batch_size=len(features))
+    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]))
     
 
 if __name__ == "__main__":
