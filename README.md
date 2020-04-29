@@ -114,7 +114,7 @@ We use the open source library Guild AI[[11]](#GuildAI) to simplify experiments 
 * `guild compare -o gcn --csv -> results/gcn.csv`
 * `python3 results.py -p results/gcn.csv`
 
-### ChebNet
+### GAT
 * `guild compare -o gat --csv -> results/gat.csv`
 * `python3 results.py -p results/gat.csv`
 
