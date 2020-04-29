@@ -328,10 +328,14 @@ def plot_tsne(data, labels, n_classes):
     sns.scatterplot(
         x="t1", y="t2",
         hue="y",
-        palette=sns.color_palette("husl", n_classes), # "hls" "muted" "husl"
+        palette=sns.color_palette(["#000000", "#66cdaa", "#ff8c00", "#00ff00", "#0000ff", "#1e90ff", "#ff1493"]),    #("Set2", n_classes), # "hls" "muted" "husl"
         legend=False,
         data=v,
     )
+    plt.xticks([])
+    plt.yticks([])
+    plt.xlabel('') 
+    plt.ylabel('')
     plt.show()
 
 # if __name__ == '__main__':
