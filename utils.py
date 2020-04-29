@@ -303,7 +303,7 @@ def read_dataset_yang_splits(dataset):  # adapted from GCN Github code
 
 
 
-def plot_tsne(data, labels, n_classes):
+def plot_tsne(data, labels, n_classes, model_name=None):
 
     from sklearn.manifold import TSNE
     import matplotlib.pyplot as plt
@@ -316,7 +316,7 @@ def plot_tsne(data, labels, n_classes):
     """
     n_components = 2
 
-    tsne = TSNE(n_components=n_components, init='pca', perplexity=40, random_state=0, model_name=None)
+    tsne = TSNE(n_components=n_components, init='pca', perplexity=40, random_state=0)
     tsne_res = tsne.fit_transform(data)
 
     v = pd.DataFrame(data,columns=[str(i) for i in range(data.shape[1])])
@@ -336,7 +336,7 @@ def plot_tsne(data, labels, n_classes):
     plt.yticks([])
     plt.xlabel('') 
     plt.ylabel('')
-    plt.savefig(DIR_NAME+'/tsne/'+model_name+'tsne.png')
+    plt.savefig(DIR_NAME+'/tsne/'+model_name+'t-SNE.png')
 
 # if __name__ == '__main__':
 def main():
