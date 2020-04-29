@@ -56,6 +56,15 @@ For each algorithm, we report:
 | **GAT**<sup>3</sup>       | 81.0 ± 1.7% | 69.7 ± 1.7%  | 77.4 ± 2.4% |
 
 
+# t-SNE
+Planetoid-T             |  ChebNet
+:-------------------------:|:-------------------------:
+![](t-SNE/Planetoid-T_t-SNE.png)  |  ![](t-SNE/ChebNet_t-SNE.png)
+
+
+GCN             |  GAT
+:-------------------------:|:-------------------------:
+![](t-SNE/GCN_t-SNE.png)  |  ![](t-SNE/GAT_t-SNE.png)
 
 # Reproducing experiments
 
