@@ -56,6 +56,17 @@ For each algorithm, we report:
 | **GAT**<sup>3</sup>       | 81.0 ± 1.7% | 69.7 ± 1.7%  | 77.4 ± 2.4% |
 
 
+# t-SNE
+t-SNE plots of the hidden features obtained with trained models on the Cora dataset. Points represent graph nodes, whereas different colors represent different class labels.
+
+Planetoid-T             |  ChebNet
+:-------------------------:|:-------------------------:
+![](t-SNE/Planetoid-T_t-SNE.png)  |  ![](t-SNE/ChebNet_t-SNE.png)
+
+
+GCN             |  GAT
+:-------------------------:|:-------------------------:
+![](t-SNE/GCN_t-SNE.png)  |  ![](t-SNE/GAT_t-SNE.png)
 
 # Reproducing experiments
 
