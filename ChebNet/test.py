@@ -10,54 +10,60 @@ with add_parent_path():
     from metrics import *
     from utils import *
 
-# TODO: refactor code
 def main(dataset_name,
         dropout_rate, K, hidden_units,
-        training_epochs, learning_rate, l2_weight,
-        data_seed, #net_seed,
-        model_path):
+        l2_weight,
+        data_seed,
+        model_path, verbose,
+        tsne):
     
     # reproducibility
     np.random.seed(data_seed)
-    #tf.random.set_seed(net_seed)
 
-    print("reading dataset")
+    if verbose > 0: print("reading dataset")
     features, neighbors, labels, o_h_labels, keys = read_dataset(dataset_name)
     num_classes = len(set(labels))
 
-    print("shuffling dataset")
+    if verbose > 0: print("shuffling dataset")
     features, neighbors, labels, o_h_labels, keys = permute(features, neighbors, labels, o_h_labels, keys)
     features = normalize_features(features)
 
-    print("obtaining masks")
+    if verbose > 0: print("obtaining masks")
     mask_train, mask_val, mask_test = split(dataset_name, labels)
     y_train = np.multiply(o_h_labels, np.broadcast_to(mask_train.T, o_h_labels.T.shape).T )
     y_val   = np.multiply(o_h_labels, np.broadcast_to(mask_val.T,   o_h_labels.T.shape).T )
     y_test  = np.multiply(o_h_labels, np.broadcast_to(mask_test.T,  o_h_labels.T.shape).T )
 
-    print("calculating adjacency matrix")
+    if verbose > 0: print("calculating adjacency matrix")
     A = adjacency_matrix(neighbors)
-    print("calculating scaled normalized laplacian matrix")
+    if verbose > 0: print("calculating scaled normalized laplacian matrix")
     scaled_norm_L = scaled_normalized_laplacian_matrix(A)
 
     num_nodes = A.shape[0]
     num_features = len(features[0])
 
-    print("defining model")
+    if verbose > 0: print("defining model")
     model = ChebNet(scaled_norm_L, K, num_classes, dropout_rate, hidden_units)
     model.compile(
         loss=lambda y_true, y_pred: masked_loss(y_true, y_pred, 'categorical_crossentropy') + l2_weight * tf.nn.l2_loss(model.trainable_weights[0]), # regularize first layer only
-        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        #optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         metrics=[masked_accuracy],
         # run_eagerly=True
     )
     model.build(features.shape)
     model.summary()
-    model.load_weights(model_path)
+    model.load_weights(os.path.join(model_path, "ckpt")).expect_partial()
 
-    print("test the model on test set")
-    loss, accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
+    if verbose > 0: print("test the model on test set")
+    loss, accuracy = model.evaluate(features, y_test, batch_size=num_nodes, verbose=0)
     print("accuracy on test: " + str(accuracy))
+
+    if tsne:
+        if verbose > 0: print("calculating t-SNE plot")
+        intermediate_layer_model = tf.keras.Sequential([model.layers[0], model.layers[1]])
+        intermediate_output = intermediate_layer_model.predict(features, batch_size=num_nodes)
+        plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'ChebNet')
+
     
 
 if __name__ == "__main__":
@@ -72,20 +78,24 @@ if __name__ == "__main__":
     parser.add_argument("-hu", "--hidden-units", help="number of Chebychev filters in the first layer", default=16, type=int)
 
     # optimization hyperparameters
-    parser.add_argument("-e", "--epochs", help="number of training epochs", default=200, type=int)
-    parser.add_argument("-lr", "--learning-rate", help="starting learning rate of Adam optimizer", default=0.01, type=float)
     parser.add_argument("-l2w", "--l2-weight", help="l2 weight for regularization of first layer", default=5e-4, type=float)
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
-    # parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
     # save model to file
     parser.add_argument("-cp", "--checkpoint-path", help="path where to save the weights", default=None)
 
+    # verbose
+    parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)
+
+    # tsne
+    parser.add_argument("-t", "--tsne", help="whether to make t-SNE plot or not", default=False, action='store_true')
+
     args = parser.parse_args()
     main(args.dataset,
         args.dropout_rate, args.num_polynomials, args.hidden_units,
-        args.epochs, args.learning_rate, args.l2_weight,
-        args.data_seed,# args.net_seed,
-        args.checkpoint_point)
+        args.l2_weight,
+        args.data_seed,
+        args.checkpoint_path, args.verbose,
+        args.tsne)

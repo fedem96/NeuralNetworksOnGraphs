@@ -15,7 +15,8 @@ with add_parent_path():
 def main(dataset_name, yang_splits,
         nheads, hidden_units, feat_drop_rate, 
         coefs_drop_rate, l2_weight,
-        data_seed, checkpoint_path, verbose):
+        data_seed, checkpoint_path, verbose,
+        tsne):
 
     # reproducibility
     np.random.seed(data_seed)
@@ -50,7 +51,7 @@ def main(dataset_name, yang_splits,
     model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred)+l2_weight*tf.reduce_sum([tf.nn.l2_loss(w) for w in model.weights if not 'bias' in w.name]), 
                     metrics=[masked_accuracy])
 
-    print("load model from checkpoint")
+    if verbose > 0: print("load model from checkpoint")
     wpath = os.path.join(checkpoint_path,'cp.ckpt')
     model.load_weights(wpath).expect_partial()
 
@@ -58,8 +59,10 @@ def main(dataset_name, yang_splits,
     t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
     print("accuracy on test: " + str(t_accuracy))
 
-    intermediate_output = model.call(features, training=False, intermediate=True)
-    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'GAT')
+    if tsne:
+        if verbose > 0: print("calculating t-SNE plot")
+        intermediate_output = model.call(features, training=False, intermediate=True)
+        plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'GAT')
 
 
 if __name__ == '__main__':
@@ -88,10 +91,14 @@ if __name__ == '__main__':
     # verbose
     parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)
 
+    # tsne
+    parser.add_argument("-t", "--tsne", help="whether to make t-SNE plot or not", default=False, action='store_true')
+
     args = parser.parse_args()
     nheads = [int(item) for item in args.nheads.split(',')]
     
     main(args.dataset, args.yang_splits,
         nheads, args.hidden_units, args.feat_drop_rate, 
         args.coefs_drop_rate, args.l2_weight,
-        args.data_seed, args.checkpoint_path, args.verbose)
+        args.data_seed, args.checkpoint_path, args.verbose,
+        args.tsne)

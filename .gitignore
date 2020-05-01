@@ -8,3 +8,4 @@ data/pubmed/*
 *runs/
 *cache/
 *.hdf5
+*ckpt*

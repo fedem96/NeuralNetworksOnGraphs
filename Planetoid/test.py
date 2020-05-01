@@ -17,7 +17,8 @@ DIR_NAME = os.path.dirname(os.path.realpath(__file__))
 def main(modality, dataset_name, embedding_dim, yang_splits,
         random_walk_length, window_size,
         neg_sample, sample_context_rate,
-        data_seed, net_seed, checkpoint_path, verbose):
+        data_seed, net_seed, checkpoint_path, verbose,
+        tsne):
     
     print("Planetoid-{:s}!".format(modality))
 
@@ -65,15 +66,17 @@ def main(modality, dataset_name, embedding_dim, yang_splits,
 
     print("Test acc {:.3f}" .format(t_acc))
 
-    # tsne of the hidden rapresentations: 
-    if modality == "T":
-        # - instances embeddings for the transductive one
-        intermediate_output = model.get_manifold(np.where(mask_test)[0])
-    else:
-        # - par embeddings for the the inductive model;
-        intermediate_output = model.get_manifold(features[mask_test])
-    
-    # plot_tsne(intermediate_output, labels[mask_test], len(o_h_labels[0]), 'Planetoid-'+modality)
+    if tsne:
+        if verbose > 0: print("calculating t-SNE plot")
+        # tsne of the hidden rapresentations: 
+        if modality == "T":
+            # - instances embeddings for the transductive one
+            intermediate_output = model.get_manifold(np.where(mask_test)[0])
+        else:
+            # - par embeddings for the the inductive model;
+            intermediate_output = model.get_manifold(features[mask_test])
+        
+        plot_tsne(intermediate_output, labels[mask_test], len(o_h_labels[0]), 'Planetoid-'+modality)
 
 
 if __name__ == '__main__':
@@ -106,6 +109,9 @@ if __name__ == '__main__':
     # verbose
     parser.add_argument("-v", "--verbose", help="useful prints", default=1, type=int)
 
+    # tsne
+    parser.add_argument("-t", "--tsne", help="whether to make t-SNE plot or not", default=False, action='store_true')
+
     args = parser.parse_args()
     print(args.checkpoint_path)
     args.checkpoint_path = args.checkpoint_path.encode("ascii").decode("utf-8")
@@ -114,6 +120,7 @@ if __name__ == '__main__':
     main(args.modality, args.dataset, args.embedding_dim, args.yang_splits,
         args.random_walk_length, args.window_size, 
         args.neg_sample_rate, args.sample_context_rate,
-        args.data_seed, args.net_seed, args.checkpoint_path, args.verbose)
+        args.data_seed, args.net_seed, args.checkpoint_path, args.verbose,
+        args.tsne)
 
 

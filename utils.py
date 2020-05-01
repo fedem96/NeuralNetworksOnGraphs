@@ -336,8 +336,10 @@ def plot_tsne(data, labels, n_classes, model_name=None):
     plt.yticks([])
     plt.xlabel('') 
     plt.ylabel('')
-    title = os.path.join(DIR_NAME, 't-SNE/'+model_name+'_t-SNE.png')
-    plt.savefig(title)
+    tsne_dir = os.path.join(DIR_NAME, "t-SNE")
+    if not os.path.exists(tsne_dir):
+        os.makedirs(tsne_dir)
+    plt.savefig(os.path.join(tsne_dir, model_name+'_t-SNE.png'))
 
 # if __name__ == '__main__':
 def main():

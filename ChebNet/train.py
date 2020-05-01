@@ -68,6 +68,9 @@ def main(dataset_name, yang_splits,
     callbacks.append(EarlyStoppingAvg(monitor='val_loss', mode='min', min_delta=0, patience=patience, from_epoch=from_epoch, baseline=baseline, restore_best_weights=True, verbose=verbose))
     callbacks.append(TensorBoard(log_dir='logs'))
     if model_path is not None:
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        model_path = os.path.join(model_path, "ckpt")
         callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=True, verbose=verbose))
     # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
     model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks, verbose=verbose)
@@ -95,9 +98,6 @@ def main(dataset_name, yang_splits,
     tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
     tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
 
-    intermediate_layer_model = tf.keras.Sequential([model.layers[0], model.layers[1]])
-    intermediate_output = intermediate_layer_model.predict(features, batch_size=len(features))
-    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'ChebNet')
     
 
 if __name__ == "__main__":

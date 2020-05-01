@@ -12,7 +12,6 @@ with add_parent_path():
     from utils import *
 
 
-# TODO: refactor code
 def main(dataset_name, yang_splits,
         dropout_rate, hidden_units,
         training_epochs, learning_rate, l2_weight, patience, from_epoch, baseline,
@@ -68,6 +67,9 @@ def main(dataset_name, yang_splits,
     callbacks.append(EarlyStoppingAvg(monitor='val_loss', mode='min', min_delta=0, patience=patience, from_epoch=from_epoch, baseline=baseline, restore_best_weights=True, verbose=verbose))
     callbacks.append(TensorBoard(log_dir='logs'))
     if model_path is not None:
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        model_path = os.path.join(model_path, "ckpt")
         callbacks.append(ModelCheckpoint(monitor='val_loss', mode='min', filepath=model_path, save_best_only=True, save_weights_only=True, verbose=verbose))
     # input_shape: (num_nodes, num_features) -> output_shape: (num_nodes, num_classes)
     model.fit(features, y_train, epochs=training_epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=callbacks, verbose=verbose)
@@ -78,26 +80,22 @@ def main(dataset_name, yang_splits,
     file_writer.set_as_default()
 
     # log best performances on train and val set
-    loss, accuracy = model.evaluate(features, y_train, batch_size=len(features), verbose=0)
+    loss, accuracy = model.evaluate(features, y_train, batch_size=num_nodes, verbose=0)
     print("accuracy on training: " + str(accuracy))
     tf.summary.scalar('bw_loss', data=loss, step=1)
     tf.summary.scalar('bw_accuracy', data=accuracy, step=1)
 
-    v_loss, v_accuracy = model.evaluate(features, y_val, batch_size=len(features), verbose=0)
+    v_loss, v_accuracy = model.evaluate(features, y_val, batch_size=num_nodes, verbose=0)
     print("accuracy on validation: " + str(v_accuracy))
     tf.summary.scalar('bw_val_loss', data=v_loss, step=1)
     tf.summary.scalar('bw_val_accuracy', data=v_accuracy, step=1)
     tf.summary.scalar('bw_epoch', data=callbacks[0].stopped_epoch, step=1)
     
     if verbose > 0: print("test the model on test set")
-    t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
+    t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=num_nodes, verbose=0)
     print("accuracy on test: " + str(t_accuracy))
     tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
     tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
-
-    intermediate_layer_model = tf.keras.Sequential([model.layers[0], model.layers[1]])
-    intermediate_output = intermediate_layer_model.predict(features, batch_size=len(features))
-    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'GCN')
     
 
 if __name__ == "__main__":
