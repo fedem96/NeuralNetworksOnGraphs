@@ -53,9 +53,10 @@ class Planetoid(tf.keras.Model):
 
         max_t_acc = 0
         best_weights = None
-        if not checkpoint_path==None:
-            ckpt_name = 'Planetoid_ckpts/cp.ckpt'
-            checkpoint_path = os.path.join(checkpoint_path, ckpt_name)
+        if not checkpoint_path == None:
+            if not os.path.exists(checkpoint_path):
+                os.makedirs(checkpoint_path)
+            checkpoint_path = os.path.join(checkpoint_path, 'cp.ckpt')
 
         for epoch in range(1, epochs+1):
 
@@ -82,7 +83,8 @@ class Planetoid(tf.keras.Model):
                 tf.summary.scalar('bw_val_loss', data=loss, step=epoch)
                 tf.summary.scalar('bw_val_accuracy', data=val_accuracy.result(), step=epoch)
 
-                if not checkpoint_path==None: self.save_weights(checkpoint_path)
+                if not checkpoint_path == None: 
+                    self.save_weights(checkpoint_path)
                 ep_wait = 0
             elif patience > 0:      # patience < 0 means no early stopping
                 ep_wait += 1

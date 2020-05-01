@@ -328,7 +328,7 @@ def plot_tsne(data, labels, n_classes, model_name=None):
     sns.scatterplot(
         x="t1", y="t2",
         hue="y",
-        palette=sns.color_palette(["#52D1DC", "#845218", "#8D0004", "#563EAA", "#E44658", "#63C100", "#FF7800"]),
+        palette=sns.color_palette(["#52D1DC", "#8D0004", "#845218","#563EAA", "#E44658", "#63C100", "#FF7800"]),
         legend=False,
         data=v,
     )
@@ -336,7 +336,8 @@ def plot_tsne(data, labels, n_classes, model_name=None):
     plt.yticks([])
     plt.xlabel('') 
     plt.ylabel('')
-    plt.savefig(DIR_NAME+'/tsne/'+model_name+'t-SNE.png')
+    title = os.path.join(DIR_NAME, 't-SNE/'+model_name+'_t-SNE.png')
+    plt.savefig(title)
 
 # if __name__ == '__main__':
 def main():

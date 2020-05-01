@@ -33,7 +33,7 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
         patience: Number of epochs to wait before the stop.
     """
 
-    def __init__(self, patience=0, monitor="loss_acc", checkpoint_path=None, model_name=''):
+    def __init__(self, patience=0, monitor="loss_acc", checkpoint_path=None):
         super(EarlyStoppingAccLoss, self).__init__()
 
         self.patience = patience
@@ -41,8 +41,9 @@ class EarlyStoppingAccLoss(tf.keras.callbacks.Callback):
         self.best_weights = None
         self.checkpoint_path = checkpoint_path
         if not self.checkpoint_path == None:
-            ckpt_name = model_name + '_ckpts/cp.ckpt'
-            self.checkpoint_path = os.path.join(self.checkpoint_path, ckpt_name)
+            if not os.path.exists(checkpoint_path):
+                os.makedirs(checkpoint_path)
+            self.checkpoint_path = os.path.join(self.checkpoint_path, 'cp.ckpt')
 
     def on_train_begin(self, logs=None):
         self.wait = 0

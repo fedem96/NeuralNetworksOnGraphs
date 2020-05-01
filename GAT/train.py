@@ -56,7 +56,6 @@ def main(dataset_name, yang_splits,
     model.compile(loss=lambda y_true, y_pred: masked_loss(y_true, y_pred)+l2_weight*tf.reduce_sum([tf.nn.l2_loss(w) for w in model.weights if not 'bias' in w.name]), 
                     optimizer=optimizer, metrics=[masked_accuracy])
 
-
     if verbose > 0: print("begin training")    
     tb = TensorBoard(log_dir='logs')
     if dataset_name == 'cora':
@@ -65,7 +64,7 @@ def main(dataset_name, yang_splits,
         monitor = 'loss'
     else:
         monitor = 'acc'
-    es = EarlyStoppingAccLoss(patience, monitor, checkpoint_path, 'GAT')
+    es = EarlyStoppingAccLoss(patience, monitor, checkpoint_path)
 
     model.fit(features, y_train, epochs=epochs, batch_size=len(features), shuffle=False, validation_data=(features, y_val), callbacks=[tb, es], verbose=verbose)
 
@@ -83,16 +82,11 @@ def main(dataset_name, yang_splits,
     tf.summary.scalar('bw_val_loss', data=v_loss, step=1)
     tf.summary.scalar('bw_val_accuracy', data=v_accuracy, step=1)
     tf.summary.scalar('bw_epoch', data=es.stopped_epoch, step=1)
-    
+
     if verbose > 0: print("test the model on test set")
     t_loss, t_accuracy = model.evaluate(features, y_test, batch_size=len(features), verbose=0)
     print("accuracy on test: " + str(t_accuracy))
-    tf.summary.scalar('bw_test_loss', data=t_loss, step=1)
-    tf.summary.scalar('bw_test_accuracy', data=t_accuracy, step=1)
-
-    intermediate_output = model.call(features, training=False, intermediate=True)
-    plot_tsne(intermediate_output[mask_test], labels[mask_test], len(o_h_labels[0]), 'GAT')
-
+    
 
 if __name__ == '__main__':
 

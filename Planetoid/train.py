@@ -104,8 +104,8 @@ if __name__ == '__main__':
     parser.add_argument("-emb", "--embedding-dim", help="node embedding size", default=50, type=int)
 
     # optimization parameters
-    parser.add_argument("-e", "--epochs", help="training epochs", default=1, type=int)
-    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=1, type=int)
+    parser.add_argument("-e", "--epochs", help="training epochs", default=1000, type=int)
+    parser.add_argument("-it", "--pretrain-batch", help="pretraining batches number", default=10400, type=int)
     parser.add_argument("-t1", "--supervised-batch", help="supervised batch number at each epoch", default=1.0, type=float)
     parser.add_argument("-t2", "--unsupervised-batch", help="unsupervised batch number at each epoch", default=0.1, type=float)
     parser.add_argument("-n1", "--supervised-batch-size", help="supervised mini-batch size", default=200, type=int)
