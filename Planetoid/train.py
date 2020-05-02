@@ -79,16 +79,6 @@ def main(modality, dataset_name, yang_splits,
 
     print("Test acc {:.3f}" .format(t_acc))
 
-    # tsne of the hidden rapresentations: 
-    if modality == "T":
-        # - instances embeddings for the transductive one
-        intermediate_output = model.get_manifold(np.where(mask_test)[0])
-    else:
-        # - par embeddings for the the inductive model;
-        intermediate_output = model.get_manifold(features[mask_test])
-    
-    plot_tsne(intermediate_output, labels[mask_test], len(o_h_labels[0]), 'Planetoid-'+modality)
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Train Planetoid')
