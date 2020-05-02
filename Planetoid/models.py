@@ -9,7 +9,7 @@ from time import time
 
 class Planetoid(tf.keras.Model):
 
-    def __init__(self, A, labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters):
+    def __init__(self, A, labels, embedding_dim, random_walk_length, window_size, neg_sample, mask_train, labeled_iters):
         super().__init__()
         self.A = A
         self.labels = labels
@@ -20,7 +20,6 @@ class Planetoid(tf.keras.Model):
         self.q = random_walk_length
         self.d = window_size
         self.r1 = neg_sample
-        self.r2 = sample_context_rate
         self.mask_train = mask_train
         self.train_size = len(np.where(mask_train)[0])
 

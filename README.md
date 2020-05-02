@@ -71,64 +71,42 @@ GCN             |  GAT
 # Reproducing experiments
 
 ## Download repository
-* `git clone https://github.com/fedem96/NeuralNetworksOnGraphs.git`
-* `cd NeuralNetworksOnGraphs`
+```sh
+$ git clone https://github.com/fedem96/NeuralNetworksOnGraphs.git
+$ cd NeuralNetworksOnGraphs
+```
 
 ## Install dependecies
-* `pip install -r requirements.txt`
+```sh
+$ pip install -r requirements.txt
+```
 
 ## Download (original) datasets
-* `mkdir data`
+```sh
+$ mkdir data
+```
 
 ### Citeseer
-* `wget https://linqs-data.soe.ucsc.edu/public/lbc/citeseer.tgz`
-* `tar -xf citeseer.tgz -C data`
+```sh
+$ wget https://linqs-data.soe.ucsc.edu/public/lbc/citeseer.tgz
+$ tar -xf citeseer.tgz -C data
+```
 
 ### Cora
-* `wget https://linqs-data.soe.ucsc.edu/public/lbc/cora.tgz`
-* `tar -xf cora.tgz -C data`
+```sh
+$ wget https://linqs-data.soe.ucsc.edu/public/lbc/cora.tgz
+$ tar -xf cora.tgz -C data
+```
 
 ### Pubmed
-* `wget https://linqs-data.soe.ucsc.edu/public/Pubmed-Diabetes.tgz`
-* `tar -xf Pubmed-Diabetes.tgz -C data`
-* `mv data/Pubmed-Diabetes data/pubmed`
+```sh
+$ wget https://linqs-data.soe.ucsc.edu/public/Pubmed-Diabetes.tgz
+$ tar -xf Pubmed-Diabetes.tgz -C data
+$ mv data/Pubmed-Diabetes data/pubmed
+```
 
 ## Run the experiments
-We use the open source library Guild AI[[11]](#GuildAI) to simplify experiments reproducibility.
-
-### Planetoid
-* `guild run planetoid-t:evaluate100`
-* `guild run planetoid-i:evaluate100`
-
-### ChebNet
-* `guild run chebnet:evaluate100`
-
-### GCN
-* `guild run gcn:evaluate100`
-
-### GAT
-* `guild run gat:evaluate100`
-
-## Calculate means and standard deviations
-
-### Planetoid
-* `guild compare -o planetoid-t --csv -> results/planetoid-t.csv`
-* `guild compare -o planetoid-i --csv -> results/planetoid-i.csv`
-* `python3 results.py -p results/planetoid-t.csv`
-* `python3 results.py -p results/planetoid-i.csv`
-
-### ChebNet
-* `guild compare -o chebnet --csv -> results/chebnet.csv`
-* `python3 results.py -p results/chebnet.csv`
-
-### GCN
-* `guild compare -o gcn --csv -> results/gcn.csv`
-* `python3 results.py -p results/gcn.csv`
-
-### GAT
-* `guild compare -o gat --csv -> results/gat.csv`
-* `python3 results.py -p results/gat.csv`
-
+To reproduce the experiments please refers to [this](experiments.md).
 
 # References
 <a name="Wu">[1]</a> Z. Wu, S. Pan, F. Chen, G. Long, C. Zhang and P. S. Yu. *A Comprehensive Survey on Graph Neural Networks* (2019)  
@@ -145,5 +123,4 @@ Y. Bengio. *Graph attention networks* (2017)
 <a name="Datasets">[8]</a> Datasets: https://linqs.soe.ucsc.edu/data  
 <a name="Citeseer">[9]</a> C. L. Giles, K. Bollacker and S. Lawrence. *Citeseer: An automatic citation indexing system* (1998)  
 <a name="Cora">[10]</a> A. McCallum, K. Nigam, J. Rennie, and K. Seymore. *Automating
-the construction of internet portals with machine learning* (2000)  
-<a name="GuildAI">[11]</a> https://guild.ai/
+the construction of internet portals with machine learning* (2000) 

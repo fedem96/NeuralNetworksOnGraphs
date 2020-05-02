@@ -16,15 +16,14 @@ DIR_NAME = os.path.dirname(os.path.realpath(__file__))
 
 def main(modality, dataset_name, embedding_dim, yang_splits,
         random_walk_length, window_size,
-        neg_sample, sample_context_rate,
-        data_seed, net_seed, checkpoint_path, verbose,
+        neg_sample, data_seed, 
+        checkpoint_path, verbose,
         tsne):
     
     print("Planetoid-{:s}!".format(modality))
 
     # reproducibility
     np.random.seed(data_seed)
-    tf.random.set_seed(net_seed)
 
     if yang_splits:
         features, o_h_labels, A, mask_train, mask_val, mask_test = read_dataset(dataset_name, yang_splits=True)
@@ -47,10 +46,10 @@ def main(modality, dataset_name, embedding_dim, yang_splits,
     # Define model, loss, metrics and optimizers
     if modality == "I":
         labeled_iters = 10000
-        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
+        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, mask_train, labeled_iters)
     elif modality == "T":
         labeled_iters = 2000    
-        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
+        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, mask_train, labeled_iters)
 
     L_s = tf.keras.losses.CategoricalCrossentropy("loss_s")
 
@@ -87,7 +86,7 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--modality", help="model to use", default="I", choices=["I", "T"])
     
     # dataset choice
-    parser.add_argument("-d", "--dataset", help="dataset to use", default="citeseer", choices=["citeseer", "cora", "pubmed"])
+    parser.add_argument("-d", "--dataset", help="dataset to use", default="cora", choices=["citeseer", "cora", "pubmed"])
     parser.add_argument("-y", "--yang-splits", help="whether to use Yang splits or not", default=False, action='store_true')
     
     # network hyperparameters
@@ -96,12 +95,10 @@ if __name__ == '__main__':
     # sampling algorithm (Alg.1) hyper-parameters
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
     parser.add_argument("-w", "--window-size", help="window size", default=3, type=int)
-    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=5/6, type=float)
-    parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=5/6, type=float)
+    parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=0, type=float)
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
-    parser.add_argument("-ns", "--net-seed", help="seed to set in tensorflow before creating the neural network", default=0, type=int)
 
     # save model weights
     parser.add_argument("-cp", "--checkpoint-path", help="path for loading model checkpoint", type=str)
@@ -119,8 +116,8 @@ if __name__ == '__main__':
     
     main(args.modality, args.dataset, args.embedding_dim, args.yang_splits,
         args.random_walk_length, args.window_size, 
-        args.neg_sample_rate, args.sample_context_rate,
-        args.data_seed, args.net_seed, args.checkpoint_path, args.verbose,
+        args.neg_sample_rate, args.data_seed,
+        args.checkpoint_path, args.verbose,
         args.tsne)
 
 

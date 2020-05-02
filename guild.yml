@@ -28,8 +28,6 @@
           default: 0.01
         pretrain-batch: 
           default: 2070
-        sample-context-rate:
-          default: 0.033
         unsupervised-batch: 
           default: 0
         unsupervised-batch-size: 
@@ -49,8 +47,6 @@
           default: 0.01
         pretrain-batch: 
           default: 2070
-        sample-context-rate:
-          default: 0.033
         unsupervised-batch: 
           default: 0
         unsupervised-batch-size: 
@@ -286,6 +282,15 @@
           default: 0.01
         l2-weight:
           default: 0.001        
+    
+    test:
+      description: 
+      main: GAT/test
+      sourcecode: 'nothing'
+      flags-dest: args
+      flags:
+        checkpoint-path:
+          required: True
     
     test-cora:
       description: 

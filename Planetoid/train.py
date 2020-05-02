@@ -16,8 +16,8 @@ def main(modality, dataset_name, yang_splits,
         unsupervised_batch_size, learning_rate_supervised, 
         learning_rate_unsupervised, patience,
         random_walk_length, window_size, 
-        neg_sample, sample_context_rate,
-        data_seed, net_seed, checkpoint_path, verbose):
+        neg_sample, data_seed, net_seed, 
+        checkpoint_path, verbose):
     
     print("Planetoid-{:s}!".format(modality))
 
@@ -46,10 +46,10 @@ def main(modality, dataset_name, yang_splits,
     # Define model, loss, metrics and optimizers
     if modality == "I":
         labeled_iters = 10000
-        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
+        model = Planetoid_I(mask_test, A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, mask_train, labeled_iters)
     elif modality == "T":
         labeled_iters = 2000    
-        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, sample_context_rate, mask_train, labeled_iters)
+        model = Planetoid_T(A, o_h_labels, embedding_dim, random_walk_length, window_size, neg_sample, mask_train, labeled_iters)
 
     L_s = tf.keras.losses.CategoricalCrossentropy("loss_s")
     if neg_sample > 0:
@@ -118,7 +118,6 @@ if __name__ == '__main__':
     parser.add_argument("-q", "--random-walk-length", help="random walk length", default=10, type=int)
     parser.add_argument("-w", "--window-size", help="window size", default=3, type=int)
     parser.add_argument("-r1", "--neg-sample-rate", help="negative sample rate", default=0, type=int)
-    parser.add_argument("-r2", "--sample-context-rate", help="context sample with label rate", default=0.038, type=float)
 
     # reproducibility
     parser.add_argument("-ds", "--data-seed", help="seed to set in numpy before shuffling dataset", default=0, type=int)
@@ -138,7 +137,7 @@ if __name__ == '__main__':
         args.unsupervised_batch_size, args.learning_rate_supervised, 
         args.learning_rate_unsupervised, args.patience,
         args.random_walk_length, args.window_size, 
-        args.neg_sample_rate, args.sample_context_rate,
-        args.data_seed, args.net_seed, args.checkpoint_path, args.verbose)
+        args.neg_sample_rate, args.data_seed, args.net_seed, 
+        args.checkpoint_path, args.verbose)
 
 
