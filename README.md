@@ -55,6 +55,7 @@ For each algorithm, we report:
 | **GAT**<sup>2</sup>       | 83.1 ± 0.4% | 71.7 ± 0.7%  | 77.7 ± 0.4% |
 | **GAT**<sup>3</sup>       | 81.0 ± 1.7% | 69.7 ± 1.7%  | 77.4 ± 2.4% |
 
+When changing data splits, average accuracies are lower and with a higher standard deviation, compared to when the data split is fixed to be the same as [[4](#Yang), [5](#Defferrard), [6](#Kipf), [7](#Velickovic)].
 
 # t-SNE
 t-SNE plots of the hidden features obtained with trained models on the Cora dataset. Points represent graph nodes, whereas different colors represent different class labels.
